@@ -2,10 +2,10 @@
 #define KG_H_
 #include <string>
 #include "linklist.h"
-#include "point.h"
 #include <ctime>
 using namespace std;
 
+class Point;
 struct E;
 struct V;
 struct Task;
@@ -29,7 +29,7 @@ struct V {
 	string text;
 	E* e;
 	linklist<Task*> task;
-	Point* p;
+    Point* p;   // 绑定的ui
 
 	V(int Id, string Title = "", string Text = "", E* in = nullptr, E* out = nullptr, Point* P = nullptr) :
 		id(Id), title(Title), text(Text), p(P) {

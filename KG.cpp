@@ -19,10 +19,10 @@ V::~V() {
 	delete e;
 
 	// 从绑定的Task处断开关系
-	Node<Task*>* p = task.head->next;
-	while (p) {
-		p->data->v.remove(this, false);
-		p = p->next;
+	Node<Task*>* q = task.head->next;
+	while (q) {
+		q->data->v.remove(this, false);
+		q = q->next;
 	}
 	// 不析构task表中的指针, 因为只是关系并非存储
 	task.clear();
@@ -107,15 +107,15 @@ bool KG::removeV(int index) {
 
 	Vtail = v.to(index - 1);			// 找到前一个
 	Node<V*>* q = Vtail->next;
+	int i = q->data->id;                // 2022/8/16 破大防 本来写在while前面 但是删第一个的时候Vtail为头结点 其V指针为空
 	Vtail->next = q->next;
 	v.length--;
 	delete q;
 
 	// 维护id和尾指针
-	int i = Vtail->data->id;
 	while (Vtail->next) {
 		Vtail = Vtail->next;
-		Vtail->data->id = ++i;
+		Vtail->data->id = i++;
 	}
 	return true;
 }
@@ -125,12 +125,12 @@ bool KG::removeV(V* targetV) {
 	Node<V*>* p = Vtail->next;
 	if (p) {
 		Vtail->next = p->next;
+		int i = p->data->id;
 		delete p;
 		v.length--;
-		int i = Vtail->data->id;
 		while (Vtail->next) {
 			Vtail = Vtail->next;
-			Vtail->data->id = ++i;
+			Vtail->data->id = i++;
 		}
 		return true;
 	}

@@ -206,7 +206,7 @@ public:
 			if (!ifdele) q->data = nullptr;	//如果不析构则设为nullptr
 			delete q;
 			length--;
-		}
+        }
 	}
 
 	/**
