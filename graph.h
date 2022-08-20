@@ -12,7 +12,6 @@ public:
 	KG* kg;
 	linklist<Point*> plist;
 	Point* selected = nullptr;
-	bool key_shift = false;                     // shift是否按下
 	
 	explicit Graph(QWidget *parent = nullptr);
 	~Graph();
@@ -56,14 +55,14 @@ public:
 	void BFS_Draw(V*, bool*);               //从某节点开始广度遍历画箭头
 	
 	void autoMove();                        //物理模型
+    void timerSwitch(bool);
 
-    QTimer* timer;
-	
 private:
+    QTimer* timer;
 	int zoomNum = 0;                        //放大倍数
 	bool ifdrag = false;
 	QPixmap* canvas = nullptr;              //总图 【2022/23/57:艹tmd，就是因为这个没有赋初值，debug了一晚上
-	signals:
+signals:
 		
 };
 

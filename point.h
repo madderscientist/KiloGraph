@@ -9,6 +9,7 @@
 #include <QtMath>
 #include <queue>
 #include "KG.h"
+#include "tiplabel.h"
 #define RADIUS 30
 
 class Point : public QPushButton
@@ -44,7 +45,6 @@ public:
     void refreshStyle(char Selected = -1, char Father = -1, char Hidden = -1, char Hidechild = -1);
 
     QPointF speed;
-    QPointF acceleration;
 signals:
 
 };

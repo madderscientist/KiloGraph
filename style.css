@@ -1,0 +1,23 @@
+Point {
+    border: 5px solid #FF7D94;
+    font-size: 18px;
+}
+QTabWidget::pane {
+    border: none;
+    background-color: transparent;
+}
+
+QTabBar::tab {
+    height: 35px;
+    width: 160px;
+    background: white;
+    border-right: 2px solid rgb(250,250,250);
+    border-top: 2px solid rgb(250,250,250);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+QTabBar::tab:!selected {
+    background: none;
+}
+

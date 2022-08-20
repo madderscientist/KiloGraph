@@ -3,11 +3,10 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QMenu>
-#include <QTimer>
 
 // 物理模型参数
 #define MASS 0.1                // 质量
-#define DAMPING 1               // 阻尼
+#define DAMPING 1.2               // 阻尼
 #define DT 0.01                 // 时间间隔
 #define K 6                     // 劲度系数
 #define G 1e7                   // 斥力系数
@@ -16,42 +15,41 @@
 Graph::Graph(QWidget *parent)
 	: QWidget{parent}, origin(0, 0) {
 	kg = new KG();
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, [=](){
+        autoMove();
+        update();       // 其他地方的update都注释掉了
+    });
+    show();
+    QTimer::singleShot(0, this, [ = ]() {
+        /*测试用创建节点↓*/
+        V*x = addPointAtScene(QPoint(400, 350))->v;
+        V*y = addPointAtScene(QPoint(500, 650))->v;
+        for (int i = 0; i < 4; i++)
+            x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
+        for (int i = 0; i < 5; i++)
+            y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
+        x->to(y);
+        x = addPointAtScene(QPoint(180, 800))->v;
+        y->to(x);
+        for (int i = 0; i < 5; i++)
+            x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
+        V*z = addPointAtScene(QPoint(500, 250))->v;
+        z->to(y);
+        setSelected(nullptr);
+        /*测试用创建节点↑*/
 
-	/*测试用创建节点↓*/
-    V*x = addPointAtScene(QPoint(400, 350))->v;
-    V*y = addPointAtScene(QPoint(500, 650))->v;
-//    x->to(y);
-    for (int i = 0; i < 4; i++)
-        x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
-    for (int i = 0; i < 5; i++)
-        y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
-    x->to(y);
-    x = addPointAtScene(QPoint(180, 800))->v;
-    y->to(x);
-    for (int i = 0; i < 5; i++)
-        x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
-    V*z = addPointAtScene(QPoint(500, 250))->v;
-    z->to(y);
-	/*测试用创建节点↑*/
-    setSelected(nullptr);
-	QTimer::singleShot(0, this, [ = ]() {
-		// 界面加载完运行. 运行顺序破大防...
-		// 先执行完构造函数, 然后resizeEvent, 然后延时0秒函数, 然后paintEvent, 然后resizeEvent, 然后paintEvent
-		canvas = new QPixmap(size());
-		((MainWindow*)this->parent())->refreshStatus();
-        timer = new QTimer(this);
-        connect(timer, &QTimer::timeout, this, [=](){
-            autoMove();
-            update();       // 其他地方的update都注释掉了
-        });
-        timer->start(25);
-	});
+        // 界面加载完运行. 运行顺序破大防...
+        // 先执行完构造函数, 然后resizeEvent, 然后延时0秒函数, 然后paintEvent, 然后resizeEvent, 然后paintEvent
+        canvas=new QPixmap(size());
+//        timer->start(20);
+    });
 }
 Graph::~Graph() {
 	delete canvas;
 }
 void Graph::resizeEvent(QResizeEvent *e) {
-	delete canvas;
+    if(canvas) delete canvas;
 	canvas = new QPixmap(e->size());
 }
 void Graph::getGraph() {
@@ -81,6 +79,7 @@ Point* Graph::addPointAtScene(QPoint at) {
 	p->setViewSize();
 	p->refreshStyle();
     setSelected(p);
+    ((Page*)parent())->pointNumChange();    // ????????
 	return p;
 }
 void Graph::removeP(Point* p) {
@@ -88,7 +87,7 @@ void Graph::removeP(Point* p) {
 	if (selected == p) setSelected(nullptr);
 	kg->removeV(p->v->id);
 	plist.remove(p);
-	((MainWindow*)this->parent())->refreshStatus();
+    ((Page*)parent())->pointNumChange();
 //	update();
 }
 
@@ -124,7 +123,7 @@ void Graph::BFS_Draw(V* start, bool* ifvisited) {
 		}
 	}
 }
-void Graph::paintEvent(QPaintEvent*e) {
+void Graph::paintEvent(QPaintEvent*) {
 	canvas->fill(Qt::white);
 	// 经测试, 画图事件在构造函数结束后运行, 窗口内容变化就调用重画, 但是只会更新变动的一块, 所以必须update
 	// 从Qt 4.0开始，QWidget部件的所有绘制都自动使用了双缓冲，所以一般没有必要在paintEvent()函数中使用双缓冲代码来避免闪烁
@@ -167,22 +166,31 @@ void Graph::mousePressEvent(QMouseEvent *e) {
 	if (e->button() == Qt::RightButton) {
 		QMenu* mouseRightMenu = new QMenu(this);
 		QAction* Add = mouseRightMenu->addAction("添加节点");
-		QAction* Center = mouseRightMenu->addAction("回到中心");
+        QAction* dataCenter = mouseRightMenu->addAction("转到数据中心");
+        QAction* Origin = mouseRightMenu->addAction("转到世界中心");
 		connect(Add, &QAction::triggered, this, [ = ]() {
 			addPointAtView(e->pos());
-			((MainWindow*)this->parent())->refreshStatus();
 			// 跳出编辑框
 		});
-		connect(Center, &QAction::triggered, this, &Graph::backtoCenter);
+        connect(dataCenter, &QAction::triggered, this, &Graph::backtoCenter);
+        connect(Origin, &QAction::triggered, this, [ = ]() {
+            origin = QPoint(0,0);
+            refreshLocation();
+        });
 		mouseRightMenu->exec(cursor().pos());
 		delete mouseRightMenu;  // 似乎会自动析构Arrange
 	} else if (e->button() == Qt::LeftButton)
 		clickpos = e->pos();
 }
-void Graph::mouseReleaseEvent(QMouseEvent *e) {
+void Graph::mouseReleaseEvent(QMouseEvent*) {
 	// 如果松开前没有移动, 则取消选中
 	if (ifdrag) ifdrag = false;
-	else setSelected(nullptr);
+    else {      // 之前是setselected(nullptr), 现改为全部遍历
+        selected = nullptr;
+        plist.forEach([](Node<Point*>* p, int){
+            p->data->refreshStyle(0);
+        });
+    }
 }
 void Graph::mouseMoveEvent(QMouseEvent *e) {
 	//上一个clickpos由pressed或上一个move修改
@@ -199,7 +207,6 @@ void Graph::refreshLocation() {
 		p = p->next;
         q->moveF((q->location - origin)*zoomTime);
 	}
-	// 日后考虑刷新单开一个线程
 //	update();
 }
 void Graph::moveView(QPoint from, QPoint to) {
@@ -281,9 +288,9 @@ void Graph::autoMove() {
         Point* P = p->data->p;
         if(P!=selected){
             QPointF v=P->speed;
-            P->acceleration = (totalf[p->data->id] - DAMPING * P->speed) / MASS;    // 改变 加速度
-            P->speed += P->acceleration * DT;                                       // 改变 速度
-            P->moveOnScene(P->location + (P->speed + v) * DT/2);                    // 改变 位移
+            QPointF acceleration = (totalf[p->data->id] - DAMPING * v) / MASS;  // 改变 加速度
+            P->speed += acceleration * DT;                                      // 改变 速度
+            P->moveOnScene(P->location + (P->speed + v) * DT/2);                // 改变 位移
         }
 		p = p->next;
 	}
@@ -293,19 +300,24 @@ void Graph::autoMove() {
 
 void Graph::keyPressEvent(QKeyEvent* e) {
     switch(e->key()){
-    case Qt::Key_Shift:
-        key_shift = true;
-        break;
     case Qt::Key_Delete:
         removeP(selected);
+        break;
+    default:
+        QWidget::keyPressEvent(e);
         break;
     }
 }
 
 void Graph::keyReleaseEvent(QKeyEvent* e) {
     switch(e->key()){
-    case Qt::Key_Shift:
-        key_shift = false;
+    default:
+        QWidget::keyReleaseEvent(e);
         break;
     }
+}
+
+void Graph::timerSwitch(bool on){
+    timer->stop();
+    if(on) timer->start(20);
 }

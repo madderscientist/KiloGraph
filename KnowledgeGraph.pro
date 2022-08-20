@@ -13,6 +13,7 @@ SOURCES += \
     graph.cpp \
     main.cpp \
     mainwindow.cpp \
+    page.cpp \
     point.cpp \
     tdetail.cpp
 
@@ -21,8 +22,10 @@ HEADERS += \
     graph.h \
     linklist.h \
     mainwindow.h \
+    page.h \
     point.h \
-    tdetail.h
+    tdetail.h \
+    tiplabel.h
 
 FORMS += \
     mainwindow.ui \

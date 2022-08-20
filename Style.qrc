@@ -1,8 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>style.qss</file>
+        <file>style.css</file>
         <file>img/connect.png</file>
         <file>img/cut.png</file>
         <file>img/delete.png</file>
+        <file>img/edit.png</file>
+        <file>img/add.png</file>
     </qresource>
 </RCC>
