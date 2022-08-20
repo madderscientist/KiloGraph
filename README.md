@@ -4,6 +4,11 @@
 老师使用它，可视化建立学科知识点网络和题库，导出文件给学生；学生做题并生成个性化知识掌握图谱。
 
 # 更新日志
+## 2022.8.20
+主要改变了窗口的嵌套方式，使之适应未来的多文件打开。<br>
+原本是MainWindow里面直接套Graph，现在加入了中间层Page。Page中装Graph和其他悬浮窗口（未做），统一管理快捷键，协同多窗口通信。而在MainWindow中，用QTabWidget组织Page，以支持多文件。<br>
+中途遇到诸多crash，主要是QTabWidget的使用。第一次是addTab好为人父，会更改Widget的parent，导致Page通过parent()调用的不是MainWindow（当时的情况是构造函数中可以用，但之后就用不了，百思不得其解）；第二次是QTimer::singleShot执行顺序：在addTab时，由于Page的Graph有QTimer::singleShot(0)，因此addTab必须要在Graph的QTimer::singleShot之后，所以也得QTimer::singleShot。详见MainWindow.cpp的新建按钮操作的注释；第三次是removeTab时crash，因为忘了改&QTabWidget::currentChanged槽函数，导致如果关闭时显示的是最后一个tab，关闭后原本存的index就越界了。详见该函数的注释。
+
 ## 2022.8.18
 利用Qt实现可视化。主要完成三个系统：视图系统、节点样式系统、物理受力系统。
 
