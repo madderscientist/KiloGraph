@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "point.h"
 
+class Page;
 // 画图区
 class Graph : public QWidget
 {
@@ -13,10 +14,11 @@ public:
 	linklist<Point*> plist;
 	Point* selected = nullptr;
 	
-	explicit Graph(QWidget *parent = nullptr);
+    explicit Graph(Page *parent = nullptr);
 	~Graph();
 	// 获取Graph数据, 重绘界面
-	void getGraph();
+    void createByKG();
+    Point* VtoP(V*,QPoint);
 	
 	// Point的创建和删除
 	Point* addPointAtView(QPoint);
@@ -36,18 +38,18 @@ public:
 	void keyPressEvent(QKeyEvent*);
 	void keyReleaseEvent(QKeyEvent*);
 	
-	void setSelected(Point*);               //改变selected变量及样式
+    void setSelected(Point*, Point* =nullptr);//改变selected变量及样式
 	void backtoCenter();                    //回到中心点
 	
-	void moveView(QPoint,QPoint);            //集体按向量移动
+    void moveView(QPoint,QPoint);           //集体按向量移动
 	void refreshLocation();                 //根据original修改组件位置
-	void zoom(int, QPoint);                //缩放
+    void zoom(int, QPoint);                 //缩放
 	QPoint mapToScene(QPoint);              //View映射到Scene坐标
-	QPoint mapToView(QPoint);             //Scene映射到View坐标
+    QPoint mapToView(QPoint);               //Scene映射到View坐标
 	
 	QPoint clickpos;                        // 在View上的点击位置
 	double zoomTime = 1;                    //倍率，由zoomTime确定
-	QPoint origin;                           //View原点在Scene的坐标
+    QPoint origin;                          //View原点在Scene的坐标
 	
 	// 画图事件
 	void paintEvent(QPaintEvent*);
@@ -55,13 +57,14 @@ public:
 	void BFS_Draw(V*, bool*);               //从某节点开始广度遍历画箭头
 	
 	void autoMove();                        //物理模型
+    float DAMPING = 1.2;                    // 阻尼
     void timerSwitch(bool);
+    QTimer* timer;
 
 private:
-    QTimer* timer;
 	int zoomNum = 0;                        //放大倍数
 	bool ifdrag = false;
-	QPixmap* canvas = nullptr;              //总图 【2022/23/57:艹tmd，就是因为这个没有赋初值，debug了一晚上
+    QPixmap* canvas = nullptr;              //总图 【2022/23:57:艹tmd，就是因为这个没有赋初值，debug了一晚上
 signals:
 		
 };

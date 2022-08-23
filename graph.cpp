@@ -6,19 +6,18 @@
 
 // 物理模型参数
 #define MASS 0.1                // 质量
-#define DAMPING 1.2               // 阻尼
 #define DT 0.01                 // 时间间隔
 #define K 6                     // 劲度系数
 #define G 1e7                   // 斥力系数
 #define DD 0.1                  // 斥力分母 防分母为零
 
-Graph::Graph(QWidget *parent)
+Graph::Graph(Page *parent)
 	: QWidget{parent}, origin(0, 0) {
 	kg = new KG();
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, [=](){
-        autoMove();
-        update();       // 其他地方的update都注释掉了
+        if(parent->physics) autoMove();
+        update();
     });
     show();
     QTimer::singleShot(0, this, [ = ]() {
@@ -47,17 +46,36 @@ Graph::Graph(QWidget *parent)
 }
 Graph::~Graph() {
 	delete canvas;
+    delete timer;
 }
 void Graph::resizeEvent(QResizeEvent *e) {
     if(canvas) delete canvas;
 	canvas = new QPixmap(e->size());
 }
-void Graph::getGraph() {
-	delete kg;
-	plist.cut(plist.head->next);
-	// kr=new KG(?);
-	// plist.insert(?);
+
+// 根据数据结构生成点 按阿基米德螺旋排列
+void Graph::createByKG() {
+   Node<V*>* v=kg->v.head->next;
+   float ang=1.57;
+   int l=2*RADIUS;
+   int a=RADIUS/3.14;
+   while(v){
+       ang+=(l/(a*ang));
+       float r=a*ang;
+       VtoP(v->data,QPoint(r*cos(ang),r*sin(ang)));
+       v=v->next;
+   }
 }
+// 根据已经有的V生成点
+Point* Graph::VtoP(V* v, QPoint at){
+    Point* p = plist.insert(0, new Point(this))->data;
+    p->v = v;
+    v->p = p;
+    p->moveOnScene(at.x(), at.y());
+    p->setViewSize();
+    p->refreshStyle();
+    return p;
+};
 
 QPoint Graph::mapToScene(QPoint view) {
 	return view / zoomTime + origin;
@@ -66,20 +84,15 @@ QPoint Graph::mapToView(QPoint scene) {
 	return (scene - origin) * zoomTime;
 }
 
-
 Point* Graph::addPointAtView(QPoint at) {
 	return addPointAtScene(mapToScene(at));
 }
 Point* Graph::addPointAtScene(QPoint at) {
-	Point* p = plist.insert(0, new Point(this))->data;
-	V* v = kg->addV();
-	p->v = v;
-	v->p = p;
-	p->moveOnScene(at.x(), at.y());
-	p->setViewSize();
-	p->refreshStyle();
+    // 先准备好V 再根据V生成节点
+    V* v = kg->addV();
+    Point* p = VtoP(v, at);
     setSelected(p);
-    ((Page*)parent())->pointNumChange();    // ????????
+    ((Page*)parent())->pointNumChange();
 	return p;
 }
 void Graph::removeP(Point* p) {
@@ -140,7 +153,7 @@ void Graph::paintEvent(QPaintEvent*) {
 	painter.drawPixmap(0, 0, *canvas);
 }
 
-void Graph::setSelected(Point* newptr) {
+void Graph::setSelected(Point* main, Point* son) {
 	// 之前选中的还原
 	if (selected) {
 		selected->refreshStyle(0, 0);
@@ -150,20 +163,25 @@ void Graph::setSelected(Point* newptr) {
 			e = e->fnext;
 		}
 	}
-	selected = newptr;
+    selected = main;
 	if (selected) {
 		selected->refreshStyle(1, 1);
-		E* e = selected->v->e->fnext;
-		while (e) {
-			e->to->p->refreshStyle(1, 0);
-			e = e->fnext;
-		}
+        if(son){    // 单独选两个 不填就选所有子
+            son->refreshStyle(1, 0);
+        } else {
+            E* e = selected->v->e->fnext;
+            while (e) {
+                e->to->p->refreshStyle(1, 0);
+                e = e->fnext;
+            }
+        }
 	}
 }
 
 void Graph::mousePressEvent(QMouseEvent *e) {
 	// 右击菜单
 	if (e->button() == Qt::RightButton) {
+        ((Page*)parent())->setTDetail(nullptr);
 		QMenu* mouseRightMenu = new QMenu(this);
 		QAction* Add = mouseRightMenu->addAction("添加节点");
         QAction* dataCenter = mouseRightMenu->addAction("转到数据中心");

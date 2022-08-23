@@ -12,6 +12,7 @@
 #include "tiplabel.h"
 #define RADIUS 30
 
+class TDetail;
 class Point : public QPushButton
 {
     Q_OBJECT
@@ -22,6 +23,7 @@ public:
     explicit Point(QWidget *parent = nullptr);
     ~Point();
     V* v = nullptr;             // 绑定的V
+    TDetail* tdetail = nullptr; // 绑定的详情
     QPointF location;           // Scene中的坐标
     QPoint clickpos;            // 被按的位置
 
@@ -43,6 +45,7 @@ public:
     char hidden = 0;
     char hidechild = 0;
     void refreshStyle(char Selected = -1, char Father = -1, char Hidden = -1, char Hidechild = -1);
+    void refreshText();
 
     QPointF speed;
 signals:

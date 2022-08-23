@@ -1,12 +1,16 @@
 #include "point.h"
 #include "mainwindow.h"
+#include "tdetail.h"
+
 
 Point::Point(QWidget *parent)
 	: QPushButton{parent} {
     setAcceptDrops(true);
 	this->show();
 }
-Point::~Point() {}
+Point::~Point() {
+    delete tdetail;
+}
 double Point::getZoomTime() {
 	return ((Graph*)(this->parent()))->zoomTime;
 }
@@ -99,7 +103,14 @@ void Point::refreshStyle(char Selected, char Father, char Hidden, char Hidechild
 	QString bdc;                                                // 边框颜色
 	if (selected) {
 		if (father) bdc = "red";
-		else bdc = "#FFDEAD";
+        else bdc = "#FFC301";
 	} else bdc = bgc;
 	setStyleSheet(QString("border-radius:%1px;background:%2;border-color:%3").arg(width() / 2).arg(bgc, bdc));
+    refreshText();
+}
+void Point::refreshText(){
+    if(v){
+        if(v->title.empty()) setText(QString::number(v->id));
+        else setText(QString::fromStdString(v->title));
+    } else setText("");
 }

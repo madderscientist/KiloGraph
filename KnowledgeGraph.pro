@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     KG.cpp \
+    card.cpp \
     graph.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -19,6 +20,7 @@ SOURCES += \
 
 HEADERS += \
     KG.h \
+    card.h \
     graph.h \
     linklist.h \
     mainwindow.h \
@@ -28,8 +30,7 @@ HEADERS += \
     tiplabel.h
 
 FORMS += \
-    mainwindow.ui \
-    tdetail.ui
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

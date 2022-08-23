@@ -14,7 +14,31 @@ void Page::resizeEvent(QResizeEvent*) {
 void Page::pointNumChange(){
     mainwindow->refreshStatus(graph->kg->v.length);
 }
+void Page::pointNameChane(Point* P){
+    // 更新父节点TDetail对其的连线信息
+    E* e=P->v->e->tnext;
+    while(e){
+        TDetail* td=e->from->p->tdetail;
+        if(td){
+            td->clearList();
+            td->iniList();
+        }
+        e=e->tnext;
+    }
+}
 void Page::pointClick(Point* p,QMouseEvent* e) {
+    if(tdetail){
+        if(e->button() == Qt::LeftButton){
+            if(p!=tdetail->P){
+                tdetail->P->v->to(p->v);
+                tdetail->Es->addItem(new TEdgeInf(p->v,tdetail->Es));
+            } else TipLabel::showTip("不能和自己相连哦",this,600);
+        } else if(e->button() == Qt::RightButton)
+            setTDetail(nullptr);
+        return;
+    }
+
+
     // 按下shift拖拽: 左键连接, 右键断开
     if (e->button() == Qt::LeftButton){
         if(key_shift){
@@ -39,9 +63,8 @@ void Page::pointClick(Point* p,QMouseEvent* e) {
             drag.setPixmap(QPixmap(":/img/cut.png"));
             drag.exec(Qt::MoveAction);
         }else{  // 弹出编辑框
-            TDetail* tdetail = new TDetail(p);
-            tdetail->setAttribute(Qt::WA_DeleteOnClose);
-            tdetail->show();
+            p->tdetail = new TDetail(p, this);
+            p->tdetail->show();
         }
     }
 }
@@ -57,5 +80,13 @@ void Page::keyReleaseEvent(QKeyEvent* e) {
     case Qt::Key_Shift:
         key_shift = false;
         break;
+    }
+}
+void Page::setTDetail(TDetail* t){
+    if(tdetail) emit tdetail->stopAddE();
+    tdetail=t;
+    if(t) {
+        emit t->startAddE();
+        TipLabel::showTip("点击要连的点\n右击取消连线", this, 600, false);
     }
 }
