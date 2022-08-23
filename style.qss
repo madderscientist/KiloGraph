@@ -1,8 +1,0 @@
-Point {
-    width: 60px;
-    height: 60px;
-    border-radius: 30px;
-    background-color: #FF7D94;
-    border: 5px solid #FF7D94;
-    font-size: 18px;
-}
