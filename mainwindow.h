@@ -27,6 +27,7 @@ public:
     void dropEvent(QDropEvent*);
 
     void saveAs();
+    void newPage(QString path="");
 
     QPushButton* Pause;
     QLabel* Vnum;
@@ -37,6 +38,7 @@ private:
     Ui::MainWindow *ui;
     int toSlider(float);
     float toDamp(int);
+    void saved();               // 去掉*号
 
 };
 #endif // MAINWINDOW_H

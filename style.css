@@ -1,6 +1,6 @@
 Point {
     border: 5px solid #FF7D94;
-    font-size: 18px;
+    font-size: 24px;
 }
 QTabWidget::pane {
     border: none;

@@ -4,39 +4,42 @@
 TDetail::TDetail(Point* p, Page *parent)
     : Card(QString::number(p->v->id)+"号节点详情", parent), P(p)
 {
-    connect(Card::top->off, &QPushButton::clicked, p, [=](){p->tdetail = nullptr;});
+    connect(Card::top->off, &QPushButton::clicked, this, [=](){p->tdetail = nullptr;});
 
     // 俩输入框
     title=new myLineEdit(this);
     description=new myPlainTextEdit(this);
-    title->setStyleSheet("QLineEdit{font-size:22px;padding:5px 10px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                         "QLineEdit:focus{background:white;border:2px solid #90ee90;}");
     title->setText(QString::fromStdString(P->v->title));
     title->setPlaceholderText("知识点的标题");
-    description->setStyleSheet("QPlainTextEdit{font-size:20px;padding:5px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                               "QPlainTextEdit:focus{background:white;border:2px solid #90ee90;}");
     description->setPlainText(QString::fromStdString(P->v->text));
     description->setPlaceholderText("知识点的具体内容\n(焦点取消自动保存)");
     description->setMaximumHeight(180);
     connect(title, &myLineEdit::focusOut, title, [=](){
         P->v->title=title->text().toStdString();
         P->refreshText();
-        parent->pointNameChane(P);
+        parent->pointNameChange(P);
     });
-    connect(title, &myLineEdit::focusOut, title, [=](){
-        P->v->text=description->toPlainText().toStdString();
+    connect(description, &myPlainTextEdit::focusOut, this, [=](){
+        P->v->text = description->toPlainText().toStdString();
+        emit parent->ContentChanged();
     });
 
-    // 仨按钮
-    QPushButton* remove=new QPushButton("自删除",this);
-    remove->setIcon(QIcon(":/img/delete.png"));
+    // 四按钮
+    QPushButton* pin = new QPushButton(P->pin?"已固定":"固定",this);
+    pin->setIcon(QIcon(":/img/pin.png"));
+    pin->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
+                       "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    connect(pin, &QPushButton::clicked, P ,[=](){
+        pin->setText(P->pin?"固定":"已固定");
+        P->pin = !P->pin;
+    });
+    QPushButton* remove=new QPushButton(QIcon(":/img/delete.png"),"自删除",this);
     remove->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
                           "QPushButton:pressed{background:white;border-color:#90ee90;}");
     connect(remove, &QPushButton::clicked, parent ,[=](){
         parent->graph->removeP(P);
     });
-    QPushButton* addV=new QPushButton("添加分点",this);
-    addV->setIcon(QIcon(":/img/add.png"));
+    QPushButton* addV=new QPushButton(QIcon(":/img/add.png"),"添加分点",this);
     addV->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
                         "QPushButton:pressed{background:white;border-color:#90ee90;}");
     connect(addV, &QPushButton::clicked, parent ,[=](){
@@ -45,8 +48,7 @@ TDetail::TDetail(Point* p, Page *parent)
         Es->addItem(new TEdgeInf(newP->v ,Es));
         parent->graph->setSelected(P, newP);
     });
-    QPushButton* addE=new QPushButton("添加边",this);
-    addE->setIcon(QIcon(":/img/connect.png"));
+    QPushButton* addE=new QPushButton(QIcon(":/img/connect.png"),"添加边",this);
     addE->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
                         "QPushButton:pressed{background:white;border-color:#90ee90;}");
     connect(addE, &QPushButton::clicked, parent ,[=](){
@@ -55,6 +57,7 @@ TDetail::TDetail(Point* p, Page *parent)
     });
 
     QHBoxLayout* tools=new QHBoxLayout;
+    tools->addWidget(pin);
     tools->addWidget(remove);
     tools->addWidget(addV);
     tools->addWidget(addE);
@@ -77,6 +80,9 @@ TDetail::TDetail(Point* p, Page *parent)
     Card::Layout->addWidget(description);
     Card::Layout->addLayout(tools);
     Card::Layout->addWidget(Es,1);
+
+    resize(CardW,CardW/0.618);
+    move(50,50);
 
     // 填充列表
     iniList();
@@ -180,11 +186,3 @@ void TEdgeInf::expand(){
     this->setSizeHint(QSize(listWidget()->width(),150));
     detail->setReadOnly(false);
 }
-
-
-myPlainTextEdit::myPlainTextEdit(QWidget* parent):
-    QPlainTextEdit(parent){}
-myLineEdit::myLineEdit(QWidget* parent):
-    QLineEdit(parent){}
-void myLineEdit::focusOutEvent(QFocusEvent*){emit focusOut();}
-void myPlainTextEdit::focusOutEvent(QFocusEvent*){emit focusOut();}

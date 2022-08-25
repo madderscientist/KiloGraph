@@ -5,25 +5,6 @@
 #include "point.h"
 #include "page.h"
 
-class myLineEdit : public QLineEdit {
-    Q_OBJECT
-public:
-    explicit myLineEdit(QWidget* =nullptr);
-    void focusOutEvent(QFocusEvent*);
-signals:
-    void focusOut();
-};
-
-class myPlainTextEdit : public QPlainTextEdit {
-    Q_OBJECT
-public:
-    explicit myPlainTextEdit(QWidget* =nullptr);
-    void focusOutEvent(QFocusEvent*);
-signals:
-    void focusOut();
-};
-
-
 class TDetail : public Card
 {
     Q_OBJECT

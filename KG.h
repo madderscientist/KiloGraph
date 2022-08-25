@@ -1,6 +1,7 @@
 #ifndef KG_H_
 #define KG_H_
 #include <string>
+#include <fstream>
 #include "linklist.h"
 #include <ctime>
 using namespace std;
@@ -75,7 +76,7 @@ struct Task {
 		id = time(0);
 	}
 	~Task();
-	void bindV(V*);
+    bool bindV(V*);
 	void unbindV(V*);
 };
 
@@ -87,8 +88,9 @@ public:
 	linklist<V*> v;
 	linklist<Task*> task;
 
-	KG() {
+    KG(string path="") {
 		Vtail = v.head;
+        if(!path.empty()) KGread(this, path);
 	}
 	~KG() {	//不需要写任何内容, 析构由成员结构完成
 		/*	KG析构时会自动:
@@ -118,5 +120,11 @@ public:
 	Task* addTask(string Text);
 	Task* getTask(long Id);		//按id找题
 	void removeTask(long Id);	//按id删题
+
+    void saveTo(string path);
+    static void writestring(string p, ofstream& ofs);
+    static string readstring(ifstream& ifs);
+    static void KGwrite(KG*,string path);       // 把图谱数据存储到path
+    static void KGread(KG*,string path);        // 从path读取图谱 要求kg已经new
 };
 #endif 

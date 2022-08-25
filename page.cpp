@@ -2,19 +2,21 @@
 #include "mainwindow.h"
 #include "tdetail.h"
 
-Page::Page(QWidget *parent)
-    : QWidget{parent}
+Page::Page(QWidget *parent, QString path)
+    : QWidget{parent}, dir(path)
 {
     mainwindow = (MainWindow*)parent;
-    graph=new Graph(this);
+    graph=new Graph(this, path);
 }
+
 void Page::resizeEvent(QResizeEvent*) {
     if(graph) graph->resize(size());
 }
 void Page::pointNumChange(){
     mainwindow->refreshStatus(graph->kg->v.length);
+    emit ContentChanged();
 }
-void Page::pointNameChane(Point* P){
+void Page::pointNameChange(Point* P){
     // 更新父节点TDetail对其的连线信息
     E* e=P->v->e->tnext;
     while(e){
@@ -25,6 +27,16 @@ void Page::pointNameChane(Point* P){
         }
         e=e->tnext;
     }
+    emit ContentChanged();
+}
+void Page::edgeChange(Point* from){
+    // 更新父节点TDetail的边信息
+    TDetail* td=from->tdetail;
+    if(td){
+        td->clearList();
+        td->iniList();
+    }
+    emit ContentChanged();
 }
 void Page::pointClick(Point* p,QMouseEvent* e) {
     if(tdetail){
@@ -32,12 +44,22 @@ void Page::pointClick(Point* p,QMouseEvent* e) {
             if(p!=tdetail->P){
                 tdetail->P->v->to(p->v);
                 tdetail->Es->addItem(new TEdgeInf(p->v,tdetail->Es));
+                emit ContentChanged();
             } else TipLabel::showTip("不能和自己相连哦",this,600);
-        } else if(e->button() == Qt::RightButton)
+        } else
             setTDetail(nullptr);
         return;
     }
-
+    if(TbindingV){
+        if(e->button() == Qt::LeftButton){
+            if(TbindingV->t->bindV(p->v)) {       // 重复添加返回false
+                TbindingV->BindVs->addWidget(new BindV(p->v, TbindingV));
+                emit ContentChanged();
+            } else TipLabel::showTip("已经关联了哦",this,600);
+        } else
+            setTbindingV(nullptr);
+        return;
+    }
 
     // 按下shift拖拽: 左键连接, 右键断开
     if (e->button() == Qt::LeftButton){
@@ -63,6 +85,7 @@ void Page::pointClick(Point* p,QMouseEvent* e) {
             drag.setPixmap(QPixmap(":/img/cut.png"));
             drag.exec(Qt::MoveAction);
         }else{  // 弹出编辑框
+            delete p->tdetail;      // 要保证析构则nullptr
             p->tdetail = new TDetail(p, this);
             p->tdetail->show();
         }
@@ -88,5 +111,19 @@ void Page::setTDetail(TDetail* t){
     if(t) {
         emit t->startAddE();
         TipLabel::showTip("点击要连的点\n右击取消连线", this, 600, false);
+        setTbindingV(nullptr);      // 两个全局点击只能存一
     }
+}
+void Page::setTbindingV(TaskInf* t){
+    if(TbindingV) TbindingV->stopBindV();
+    TbindingV = t;
+    if(TbindingV){
+        t->startBindV();
+        TipLabel::showTip("点击关联的知识点\n右击取消添加", this, 600, false);
+        setTDetail(nullptr);
+    }
+}
+void Page::showTaskCard(){
+    delete taskcard;
+    taskcard = new TaskCard(this);
 }

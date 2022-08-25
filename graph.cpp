@@ -11,9 +11,9 @@
 #define G 1e7                   // 斥力系数
 #define DD 0.1                  // 斥力分母 防分母为零
 
-Graph::Graph(Page *parent)
+Graph::Graph(Page *parent, QString path)
 	: QWidget{parent}, origin(0, 0) {
-	kg = new KG();
+    kg = new KG(path.toStdString());
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, [=](){
         if(parent->physics) autoMove();
@@ -21,27 +21,29 @@ Graph::Graph(Page *parent)
     });
     show();
     QTimer::singleShot(0, this, [ = ]() {
+        if(!path.isEmpty()) createByKG();
+        canvas=new QPixmap(size());
         /*测试用创建节点↓*/
-        V*x = addPointAtScene(QPoint(400, 350))->v;
-        V*y = addPointAtScene(QPoint(500, 650))->v;
-        for (int i = 0; i < 4; i++)
-            x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
-        for (int i = 0; i < 5; i++)
-            y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
-        x->to(y);
-        x = addPointAtScene(QPoint(180, 800))->v;
-        y->to(x);
-        for (int i = 0; i < 5; i++)
-            x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
-        V*z = addPointAtScene(QPoint(500, 250))->v;
-        z->to(y);
-        setSelected(nullptr);
+//        V*x = addPointAtScene(QPoint(400, 350))->v;
+//        V*y = addPointAtScene(QPoint(500, 650))->v;
+//        for (int i = 0; i < 4; i++)
+//            x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
+//        for (int i = 0; i < 5; i++)
+//            y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
+//        x->to(y);
+//        x = addPointAtScene(QPoint(180, 800))->v;
+//        y->to(x);
+//        for (int i = 0; i < 5; i++)
+//            x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
+//        V*z = addPointAtScene(QPoint(500, 250))->v;
+//        z->to(y);
+//        setSelected(nullptr);
         /*测试用创建节点↑*/
 
         // 界面加载完运行. 运行顺序破大防...
         // 先执行完构造函数, 然后resizeEvent, 然后延时0秒函数, 然后paintEvent, 然后resizeEvent, 然后paintEvent
-        canvas=new QPixmap(size());
-//        timer->start(20);
+
+        // timer的start由mainwindow管控
     });
 }
 Graph::~Graph() {
@@ -182,13 +184,15 @@ void Graph::mousePressEvent(QMouseEvent *e) {
 	// 右击菜单
 	if (e->button() == Qt::RightButton) {
         ((Page*)parent())->setTDetail(nullptr);
+        ((Page*)parent())->setTbindingV(nullptr);
 		QMenu* mouseRightMenu = new QMenu(this);
 		QAction* Add = mouseRightMenu->addAction("添加节点");
+        QAction* TaskList = mouseRightMenu->addAction("题目列表");
         QAction* dataCenter = mouseRightMenu->addAction("转到数据中心");
         QAction* Origin = mouseRightMenu->addAction("转到世界中心");
+        connect(TaskList, &QAction::triggered, (Page*)parent(), &Page::showTaskCard);
 		connect(Add, &QAction::triggered, this, [ = ]() {
 			addPointAtView(e->pos());
-			// 跳出编辑框
 		});
         connect(dataCenter, &QAction::triggered, this, &Graph::backtoCenter);
         connect(Origin, &QAction::triggered, this, [ = ]() {
@@ -304,7 +308,7 @@ void Graph::autoMove() {
 	while (p) {
         if(p->data->p->hidden){ p=p->next; continue;}           // 被隐藏的不算力
         Point* P = p->data->p;
-        if(P!=selected){
+        if(P!=selected && !P->pin){
             QPointF v=P->speed;
             QPointF acceleration = (totalf[p->data->id] - DAMPING * v) / MASS;  // 改变 加速度
             P->speed += acceleration * DT;                                      // 改变 速度

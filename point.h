@@ -46,6 +46,7 @@ public:
     char hidechild = 0;
     void refreshStyle(char Selected = -1, char Father = -1, char Hidden = -1, char Hidechild = -1);
     void refreshText();
+    bool pin = false;           // 是否固定
 
     QPointF speed;
 signals:

@@ -243,6 +243,22 @@ public:
 		return -1;
 	}
 
+    /**
+    * @brief 找data的序号 (序号从0开始)
+    *
+    * @param d 要找的data
+    *
+    * @return 返回node的序号;没找到则返回-1
+    */
+    int indexOf(T* d) {
+        Node<T>* p = head->next;
+        for (int i = 0; i < length; i++) {
+            if (p->data == d) return i;
+            p = p->next;
+        }
+        return -1;
+    }
+
 	/**
 	* @brief 链表转数组
 	*

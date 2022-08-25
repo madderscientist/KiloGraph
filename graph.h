@@ -14,7 +14,7 @@ public:
 	linklist<Point*> plist;
 	Point* selected = nullptr;
 	
-    explicit Graph(Page *parent = nullptr);
+    explicit Graph(Page* = nullptr, QString="");
 	~Graph();
 	// 获取Graph数据, 重绘界面
     void createByKG();

@@ -10,7 +10,7 @@
 #include <QMouseEvent>
 #include <QDebug>
 #define CardRadius 20
-#define CardW 400
+#define CardW 440
 
 // 顶部标题栏 含关闭按钮
 class TopBar : public QWidget {
@@ -44,6 +44,24 @@ public:
     BottomResize* bottom;
     QVBoxLayout *Layout;
     void resizeEvent(QResizeEvent*);
+};
+
+class myLineEdit : public QLineEdit {
+    Q_OBJECT
+public:
+    explicit myLineEdit(QWidget* =nullptr);
+    void focusOutEvent(QFocusEvent*);
+signals:
+    void focusOut();
+};
+
+class myPlainTextEdit : public QPlainTextEdit {
+    Q_OBJECT
+public:
+    explicit myPlainTextEdit(QWidget* =nullptr);
+    void focusOutEvent(QFocusEvent*);
+signals:
+    void focusOut();
 };
 
 #endif // CARD_H

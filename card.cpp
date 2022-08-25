@@ -8,7 +8,7 @@ TopBar::TopBar(QString title, QWidget *parent)
     setCursor(Qt::OpenHandCursor);
     setStyleSheet("TopBar{border-top-left-radius:20px;border-top-right-radius:20px;background:rgb(255,154,202);}"
                   "QLabel{font-size:30px;font-weight:bold;background:transparent;}"
-                  "QPushButton{width:20px;height:20px;background:red;border-radius:10px;font-weight:bold;}");
+                  "QPushButton{width:20px;height:20px;background:red;border-radius:10px;}");
 
     QHBoxLayout* topLayout=new QHBoxLayout;
     topLayout->setContentsMargins(CardRadius,0,10,0);
@@ -76,12 +76,22 @@ Card::Card(QString Title, QWidget *parent)
     Layout->setAlignment(Qt::AlignTop|Qt::AlignHCenter);
     Layout->setContentsMargins(20,50,20,20);
     setLayout(Layout);
-
-    resize(CardW,parent->height()-100);
-    move(50,50);
 }
 void Card::resizeEvent(QResizeEvent* e){
     top->resize(e->size().width(), 2*CardRadius);
     bottom->move(width()-bottom->width(),height()-bottom->height());
 }
 
+
+myPlainTextEdit::myPlainTextEdit(QWidget* parent):
+    QPlainTextEdit(parent){
+    setStyleSheet("QPlainTextEdit{font-size:20px;padding:5px;background:rgba(255,255,255,0.8);border-radius:15px;}"
+                                   "QPlainTextEdit:focus{background:white;border:2px solid #90ee90;}");
+}
+myLineEdit::myLineEdit(QWidget* parent):
+    QLineEdit(parent){
+    setStyleSheet("QLineEdit{font-size:22px;padding:5px 10px;background:rgba(255,255,255,0.8);border-radius:15px;}"
+                             "QLineEdit:focus{background:white;border:2px solid #90ee90;}");
+}
+void myLineEdit::focusOutEvent(QFocusEvent*){emit focusOut();}
+void myPlainTextEdit::focusOutEvent(QFocusEvent*){emit focusOut();}

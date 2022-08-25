@@ -1,4 +1,6 @@
 #include "KG.h"
+#include <QMessageBox>
+
 E::~E()	{	// 维护十字链表
 	if (from == to) return;		// 如果是头结点就不必维护
 	// 出边
@@ -81,9 +83,12 @@ Task::~Task() {
 	// 不析构v表中的指针, 因为只是关系并非存储
 	v.clear();
 }
-void Task::bindV(V* tag) {
-	v.insert(0, tag);
-	tag->task.insert(0, this);
+bool Task::bindV(V* tag) {
+    if(v.indexOf(tag)==-1){
+        v.insert(0, tag);
+        tag->task.insert(0, this);
+        return true;
+    } else return false;
 }
 void Task::unbindV(V* tag) {
 	v.remove(tag, false);
@@ -176,4 +181,120 @@ void KG::removeTask(long Id) {
 		delete q;
 		task.length--;
 	}
+}
+
+void KG::saveTo(string path){
+    KGwrite(this,path);
+}
+
+void KG::writestring(string p, ofstream& ofs)
+{
+    char* c;
+    int len = p.length() + 1;
+    c = new char[len];
+    for (int i = 0; i < (int)p.length(); i++)
+        c[i] = p[i];
+    c[len - 1] = 0;
+    ofs.write((char*)&len, sizeof(len));
+    ofs.write((const char*)c, len);
+    delete[]c;
+}
+
+
+string KG::readstring(ifstream& ifs)
+{
+    int len;
+    char* tar;
+    ifs.read((char*)&len, sizeof(int));
+    tar = new char[len];
+    ifs.read(tar, len);
+    string t = tar;
+    delete[]tar;
+    return t;
+}
+
+
+void KG::KGwrite(KG* kg,string txt)
+{
+    ofstream ofs;
+    ofs.open(txt, ios::out | ios::binary);
+    /*-----存节点-----*/
+    int counter = kg->v.length;
+    ofs.write((const char*)&counter, sizeof(counter));
+
+    Node<V*>* p = kg->v.head->next;
+    for (; p; p = p->next) {
+        writestring(p->data->title, ofs);
+        writestring(p->data->text, ofs);
+    }
+    /*------存边------*/
+    string s = "a";
+    for (Node<V*>* p = kg->v.head->next; p; p = p->next) {
+        for (E* q = p->data->e->fnext; q; q = q->fnext) {
+            writestring(s, ofs);        // 标识后面的是边 因为没有统计边个数故用此法
+            ofs.write((const char*)&q->from->id, sizeof(int));
+            ofs.write((char*)&q->to->id, sizeof(int));
+            writestring(q->text,ofs);
+        }
+    }
+    writestring(string("Eend"), ofs);
+
+    /*------存题目------*/
+    counter = kg->task.length;
+    ofs.write((const char*)&counter, sizeof(int));
+    for (Node<Task*>* p = kg->task.head->next; p; p = p->next) {
+        counter = p->data->v.length;
+        writestring(p->data->text, ofs);
+        Node<V*>* q = p->data->v.head->next;
+        ofs.write((const char*)&counter, sizeof(int));
+        for (; q; q = q->next) {
+            ofs.write((char*)&q->data->id, sizeof(int));
+        }
+    }
+    ofs.close();
+}
+
+
+void KG::KGread(KG* kg,string txt)
+{
+    ifstream ifs;
+    ifs.open(txt, ios::in | ios::binary);
+    if (!ifs.is_open()) {
+        QMessageBox::warning(nullptr, "warning", "文件打开失败！"); // 不知道nullptr行不行
+        return;
+    }
+    string text, title;
+    int counter, i;
+    /*-------读点-------*/
+    ifs.read((char*)&counter, sizeof(int));
+    for (i = 0; i < counter; i++) {
+        title=readstring(ifs);
+        text=readstring(ifs);
+        kg->addV(title, text);      // 写入是从头开始 读取是尾插
+    }
+
+    /*-------读边-------*/
+    int from, to;
+    V* startV=kg->getV(0);
+    string sign = readstring(ifs);
+    while (sign != "Eend") {
+        ifs.read((char*)&from, sizeof(int));
+        ifs.read((char*)&to, sizeof(int));
+        if(startV->id!=from) startV=kg->getV(from);
+        (startV->to(kg->getV(to)))->text = readstring(ifs);
+        sign = readstring(ifs);
+    }
+
+    int counter1, n, vid;
+    ifs.read((char*)&counter1, sizeof(int));
+    for (i = 0; i < counter1; i++) {   //题目数量的循环
+        text = readstring(ifs);
+        Task* t =kg->addTask(text);     //t是task链表指针；add之后指向下一个结点（add的结点）
+        ifs.read((char*)&counter, sizeof(int));
+        for (n = 1; n <= counter; n++) {
+            ifs.read((char*)&vid, sizeof(int));
+            t->bindV(kg->getV(vid));
+        }
+    }
+    ifs.close();
 }

@@ -1,7 +1,7 @@
 #include "point.h"
 #include "mainwindow.h"
 #include "tdetail.h"
-
+#include "tiplabel.h"
 
 Point::Point(QWidget *parent)
 	: QPushButton{parent} {
@@ -78,6 +78,7 @@ void Point::dropEvent(QDropEvent *e) {
         return;
     }
     e->accept();
+    emit ((Page*)parent())->Page::edgeChange((Point*)(e->source()));
 }
 
 void Point::moveOnScene(int x, int y) {
@@ -87,7 +88,6 @@ void Point::moveOnScene(int x, int y) {
 void Point::moveOnScene(QPointF x) {
 	location = x;
     move(((location - ((Graph*)(this->parent()))->origin)*getZoomTime()).toPoint());
-//	((Graph*)(this->parent()))->update();
 }
 void Point::refreshStyle(char Selected, char Father, char Hidden, char Hidechild) {
 	if (Selected != -1) selected = Selected;
@@ -111,6 +111,6 @@ void Point::refreshStyle(char Selected, char Father, char Hidden, char Hidechild
 void Point::refreshText(){
     if(v){
         if(v->title.empty()) setText(QString::number(v->id));
-        else setText(QString::fromStdString(v->title));
+        else setText(TipLabel::multiRowText(QString::fromStdString(v->title),5));
     } else setText("");
 }
