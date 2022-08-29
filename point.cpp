@@ -1,5 +1,4 @@
 #include "point.h"
-#include "mainwindow.h"
 #include "tdetail.h"
 #include "tiplabel.h"
 

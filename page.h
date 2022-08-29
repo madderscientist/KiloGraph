@@ -11,6 +11,7 @@ class Page : public QWidget {
     Q_OBJECT
 public:
     bool teacher = true;            // 两种模式
+    void GraphMode(char mode);
     explicit Page(QWidget* = nullptr, QString="");
     Graph* graph = nullptr;
     bool physics = true;

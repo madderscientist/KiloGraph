@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
         if(tabIndex>=0){
             Page* temp=(Page*)(ui->tabWidget->currentWidget());
             temp->graph->timerSwitch(true);
-            temp->pointNumChange();
+            refreshStatus(temp->graph->kg->v.length);
         }
         menuBan();
         pageSettings();

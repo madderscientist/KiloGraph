@@ -30,7 +30,7 @@ struct V {
 	string text;
 	E* e;
 	linklist<Task*> task;
-    Point* p;   // 绑定的ui
+	Point* p;   // 绑定的ui
 
 	V(int Id, string Title = "", string Text = "", E* in = nullptr, E* out = nullptr, Point* P = nullptr) :
 		id(Id), title(Title), text(Text), p(P) {
@@ -72,59 +72,75 @@ struct Task {
 	long id;		// 用时间戳定义id, 独一无二
 	string text;
 	linklist<V*> v;
-	Task(string Text) :text(Text) {
+	Task(string Text) : text(Text) {
 		id = time(0);
 	}
 	~Task();
-    bool bindV(V*);
+	bool bindV(V*);
 	void unbindV(V*);
 };
 
 // 	KnowledgeGraph 类
 class KG {
-private:
-	Node<V*>* Vtail;	//尾指针, 用于加速尾插和维护V的id
-public:
-	linklist<V*> v;
-	linklist<Task*> task;
+	private:
+		Node<V*>* Vtail;	//尾指针, 用于加速尾插和维护V的id
+	public:
+		linklist<V*> v;
+		linklist<Task*> task;
 
-    KG(string path="") {
-		Vtail = v.head;
-        if(!path.empty()) KGread(this, path);
-	}
-	~KG() {	//不需要写任何内容, 析构由成员结构完成
-		/*	KG析构时会自动:
-			调用v表的析构:
-				v表析构每个node
-					每个node析构自己的V		...	V全部析构
-						每个V析构相关联的E		...	E全部析构
-			调用task表的析构:
-				task表析构每个node
-					每个node析构自己的Task	...	Task全部析构
-		*/
-	}
+		KG() {
+			Vtail = v.head;
+		}
+		~KG() {	//不需要写任何内容, 析构由成员结构完成
+			/*	KG析构时会自动:
+				调用v表的析构:
+					v表析构每个node
+						每个node析构自己的V		...	V全部析构
+							每个V析构相关联的E		...	E全部析构
+				调用task表的析构:
+					task表析构每个node
+						每个node析构自己的Task	...	Task全部析构
+			*/
+		}
 
-	// V的id指示的是其在链表的位置, 需要维护
-	V* addV(string Title = "", string Text = "");
-	V* getV(int index);			// 按id获取V
-	bool removeV(int index);	// 按id删V
-	bool removeV(V*);
+		// V的id指示的是其在链表的位置, 需要维护
+		V* addV(string Title = "", string Text = "");
+		V* getV(int index);			// 按id获取V
+		bool removeV(int index);	// 按id删V
+		bool removeV(V*);
 
-	E* addE(int From, int To);
-	E* getE(int From, int To);
-	E* addE(V* From, V* To) = delete;	// 传参为节点指针的可以直接调用节点的to函数
-	E* getE(V* From, V* To) = delete;	// 这两个被delete的函数都可以用节点的to函数替代, 因此可以不写
-	void removeE(V* From, V* To);
-	void removeE(int From, int To);
+		E* addE(int From, int To);
+		E* getE(int From, int To);
+		E* addE(V* From, V* To) = delete;	// 传参为节点指针的可以直接调用节点的to函数
+		E* getE(V* From, V* To) = delete;	// 这两个被delete的函数都可以用节点的to函数替代, 因此可以不写
+		void removeE(V* From, V* To);
+		void removeE(int From, int To);
 
-	Task* addTask(string Text);
-	Task* getTask(long Id);		//按id找题
-	void removeTask(long Id);	//按id删题
+		Task* addTask(string Text);
+		Task* getTask(long Id);		//按id找题
+		void removeTask(long Id);	//按id删题
 
-    void saveTo(string path);
-    static void writestring(string p, ofstream& ofs);
-    static string readstring(ifstream& ifs);
-    static void KGwrite(KG*,string path);       // 把图谱数据存储到path
-    static void KGread(KG*,string path);        // 从path读取图谱 要求kg已经new
+		void saveTo(string path);
+		static void writestring(string p, ofstream& ofs);
+		static string readstring(ifstream& ifs);
+
+		/**
+		 * @brief 把图谱存储到path
+		 *
+		 * @param kg        待存的图谱 没做空指针判断
+		 * @param path      文件路径
+		 * @param mode      1（默认）为编辑性存储 2为导出性存储（给学生的，要加密）
+		 */
+		static void KGwrite(KG* kg, string path, char mode = 1);
+
+		/**
+		 * @brief 从文件读取图谱
+		 *
+		 * @param kg        需要kg已经new过且尚未添加内容
+		 * @param path      文件路径
+		 *
+		 * @return 打开失败:0 编辑模式:1 学生读取模式:2
+		 */
+		static char KGread(KG* kg, string path);
 };
-#endif 
+#endif

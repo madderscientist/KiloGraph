@@ -1,6 +1,7 @@
 #include "page.h"
 #include "mainwindow.h"
 #include "tdetail.h"
+#include <QMessageBox>
 
 Page::Page(QWidget *parent, QString path)
     : QWidget{parent}, dir(path)
@@ -12,6 +13,22 @@ Page::Page(QWidget *parent, QString path)
 void Page::resizeEvent(QResizeEvent*) {
     if(graph) graph->resize(size());
 }
+
+void Page::GraphMode(char mode){
+    switch(mode){
+    case 1:
+        teacher = true;
+        break;
+    case 2:
+        teacher = false;
+        break;
+    default:
+        QMessageBox::warning(this, "warning", "文件打开失败！");
+        dir="";
+        break;
+    }
+}
+
 void Page::pointNumChange(){
     mainwindow->refreshStatus(graph->kg->v.length);
     emit ContentChanged();

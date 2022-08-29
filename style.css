@@ -20,4 +20,3 @@ QTabBar::tab {
 QTabBar::tab:!selected {
     background: none;
 }
-

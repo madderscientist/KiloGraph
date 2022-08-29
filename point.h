@@ -13,6 +13,7 @@
 #define RADIUS 30
 
 class TDetail;
+class SDetail;
 class Point : public QPushButton
 {
     Q_OBJECT

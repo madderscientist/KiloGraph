@@ -18,6 +18,7 @@ SOURCES += \
     mainwindow.cpp \
     page.cpp \
     point.cpp \
+    sdetail.cpp \
     taskcard.cpp \
     tdetail.cpp
 
@@ -29,6 +30,7 @@ HEADERS += \
     mainwindow.h \
     page.h \
     point.h \
+    sdetail.h \
     taskcard.h \
     tdetail.h \
     tiplabel.h

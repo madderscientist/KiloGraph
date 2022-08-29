@@ -13,70 +13,73 @@
 
 Graph::Graph(Page *parent, QString path)
 	: QWidget{parent}, origin(0, 0) {
-    kg = new KG(path.toStdString());
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, [=](){
-        if(parent->physics) autoMove();
-        update();
-    });
-    show();
-    QTimer::singleShot(0, this, [ = ]() {
-        if(!path.isEmpty()) createByKG();
-        canvas=new QPixmap(size());
-        /*测试用创建节点↓*/
-//        V*x = addPointAtScene(QPoint(400, 350))->v;
-//        V*y = addPointAtScene(QPoint(500, 650))->v;
-//        for (int i = 0; i < 4; i++)
-//            x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
-//        for (int i = 0; i < 5; i++)
-//            y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
-//        x->to(y);
-//        x = addPointAtScene(QPoint(180, 800))->v;
-//        y->to(x);
-//        for (int i = 0; i < 5; i++)
-//            x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
-//        V*z = addPointAtScene(QPoint(500, 250))->v;
-//        z->to(y);
-//        setSelected(nullptr);
-        /*测试用创建节点↑*/
+	kg = new KG();
+	if (!path.isEmpty())
+		parent->GraphMode(KG::KGread(kg, path.toStdString()));
+	timer = new QTimer(this);
+	connect(timer, &QTimer::timeout, this, [ = ]() {
+		if (parent->physics) autoMove();
+		update();
+	});
+	show();
+	QTimer::singleShot(0, this, [ = ]() {
+		if (!path.isEmpty()) createByKG();
+		canvas = new QPixmap(size());
+		/*测试用创建节点↓*/
+		//        V*x = addPointAtScene(QPoint(400, 350))->v;
+		//        V*y = addPointAtScene(QPoint(500, 650))->v;
+		//        for (int i = 0; i < 4; i++)
+		//            x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
+		//        for (int i = 0; i < 5; i++)
+		//            y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
+		//        x->to(y);
+		//        x = addPointAtScene(QPoint(180, 800))->v;
+		//        y->to(x);
+		//        for (int i = 0; i < 5; i++)
+		//            x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
+		//        V*z = addPointAtScene(QPoint(500, 250))->v;
+		//        z->to(y);
+		//        setSelected(nullptr);
+		/*测试用创建节点↑*/
 
-        // 界面加载完运行. 运行顺序破大防...
-        // 先执行完构造函数, 然后resizeEvent, 然后延时0秒函数, 然后paintEvent, 然后resizeEvent, 然后paintEvent
+		// 界面加载完运行. 运行顺序破大防...
+		// 先执行完构造函数, 然后resizeEvent, 然后延时0秒函数, 然后paintEvent, 然后resizeEvent, 然后paintEvent
 
-        // timer的start由mainwindow管控
-    });
+		// timer的start由mainwindow管控
+		QTimer::singleShot(10, this, &Graph::backtoCenter);
+	});
 }
 Graph::~Graph() {
 	delete canvas;
-    delete timer;
+	delete timer;
 }
 void Graph::resizeEvent(QResizeEvent *e) {
-    if(canvas) delete canvas;
+	if (canvas) delete canvas;
 	canvas = new QPixmap(e->size());
 }
 
 // 根据数据结构生成点 按阿基米德螺旋排列
 void Graph::createByKG() {
-   Node<V*>* v=kg->v.head->next;
-   float ang=1.57;
-   int l=2*RADIUS;
-   int a=RADIUS/3.14;
-   while(v){
-       ang+=(l/(a*ang));
-       float r=a*ang;
-       VtoP(v->data,QPoint(r*cos(ang),r*sin(ang)));
-       v=v->next;
-   }
+	Node<V*>* v = kg->v.head->next;
+	float ang = 1.57;
+	int l = 2 * RADIUS;
+	int a = RADIUS / 3.14;
+	while (v) {
+		ang += (l / (a * ang));
+		float r = a * ang;
+		VtoP(v->data, QPoint(r * cos(ang), r * sin(ang)));
+		v = v->next;
+	}
 }
 // 根据已经有的V生成点
-Point* Graph::VtoP(V* v, QPoint at){
-    Point* p = plist.insert(0, new Point(this))->data;
-    p->v = v;
-    v->p = p;
-    p->moveOnScene(at.x(), at.y());
-    p->setViewSize();
-    p->refreshStyle();
-    return p;
+Point* Graph::VtoP(V* v, QPoint at) {
+	Point* p = plist.insert(0, new Point(this))->data;
+	p->v = v;
+	v->p = p;
+	p->moveOnScene(at.x(), at.y());
+	p->setViewSize();
+	p->refreshStyle();
+	return p;
 };
 
 QPoint Graph::mapToScene(QPoint view) {
@@ -90,11 +93,11 @@ Point* Graph::addPointAtView(QPoint at) {
 	return addPointAtScene(mapToScene(at));
 }
 Point* Graph::addPointAtScene(QPoint at) {
-    // 先准备好V 再根据V生成节点
-    V* v = kg->addV();
-    Point* p = VtoP(v, at);
-    setSelected(p);
-    ((Page*)parent())->pointNumChange();
+	// 先准备好V 再根据V生成节点
+	V* v = kg->addV();
+	Point* p = VtoP(v, at);
+	setSelected(p);
+	((Page*)parent())->pointNumChange();
 	return p;
 }
 void Graph::removeP(Point* p) {
@@ -102,8 +105,8 @@ void Graph::removeP(Point* p) {
 	if (selected == p) setSelected(nullptr);
 	kg->removeV(p->v->id);
 	plist.remove(p);
-    ((Page*)parent())->pointNumChange();
-//	update();
+	((Page*)parent())->pointNumChange();
+	//	update();
 }
 
 void Graph::drawArrow(Point* from, Point* to) {
@@ -133,7 +136,7 @@ void Graph::BFS_Draw(V* start, bool* ifvisited) {
 				q.push(t);
 				ifvisited[t->id] = true;
 			}
-            if(!t->p->hidden) drawArrow(start->p, t->p);        // 如果隐藏了不画线
+			if (!t->p->hidden) drawArrow(start->p, t->p);       // 如果隐藏了不画线
 			e = e->fnext;
 		}
 	}
@@ -165,40 +168,40 @@ void Graph::setSelected(Point* main, Point* son) {
 			e = e->fnext;
 		}
 	}
-    selected = main;
+	selected = main;
 	if (selected) {
 		selected->refreshStyle(1, 1);
-        if(son){    // 单独选两个 不填就选所有子
-            son->refreshStyle(1, 0);
-        } else {
-            E* e = selected->v->e->fnext;
-            while (e) {
-                e->to->p->refreshStyle(1, 0);
-                e = e->fnext;
-            }
-        }
+		if (son)    // 单独选两个 不填就选所有子
+			son->refreshStyle(1, 0);
+		else {
+			E* e = selected->v->e->fnext;
+			while (e) {
+				e->to->p->refreshStyle(1, 0);
+				e = e->fnext;
+			}
+		}
 	}
 }
 
 void Graph::mousePressEvent(QMouseEvent *e) {
 	// 右击菜单
 	if (e->button() == Qt::RightButton) {
-        ((Page*)parent())->setTDetail(nullptr);
-        ((Page*)parent())->setTbindingV(nullptr);
+		((Page*)parent())->setTDetail(nullptr);
+		((Page*)parent())->setTbindingV(nullptr);
 		QMenu* mouseRightMenu = new QMenu(this);
 		QAction* Add = mouseRightMenu->addAction("添加节点");
-        QAction* TaskList = mouseRightMenu->addAction("题目列表");
-        QAction* dataCenter = mouseRightMenu->addAction("转到数据中心");
-        QAction* Origin = mouseRightMenu->addAction("转到世界中心");
-        connect(TaskList, &QAction::triggered, (Page*)parent(), &Page::showTaskCard);
+		QAction* TaskList = mouseRightMenu->addAction("题目列表");
+		QAction* dataCenter = mouseRightMenu->addAction("转到数据中心");
+		QAction* Origin = mouseRightMenu->addAction("转到世界中心");
+		connect(TaskList, &QAction::triggered, (Page*)parent(), &Page::showTaskCard);
 		connect(Add, &QAction::triggered, this, [ = ]() {
 			addPointAtView(e->pos());
 		});
-        connect(dataCenter, &QAction::triggered, this, &Graph::backtoCenter);
-        connect(Origin, &QAction::triggered, this, [ = ]() {
-            origin = QPoint(0,0);
-            refreshLocation();
-        });
+		connect(dataCenter, &QAction::triggered, this, &Graph::backtoCenter);
+		connect(Origin, &QAction::triggered, this, [ = ]() {
+			origin = QPoint(0, 0);
+			refreshLocation();
+		});
 		mouseRightMenu->exec(cursor().pos());
 		delete mouseRightMenu;  // 似乎会自动析构Arrange
 	} else if (e->button() == Qt::LeftButton)
@@ -207,12 +210,12 @@ void Graph::mousePressEvent(QMouseEvent *e) {
 void Graph::mouseReleaseEvent(QMouseEvent*) {
 	// 如果松开前没有移动, 则取消选中
 	if (ifdrag) ifdrag = false;
-    else {      // 之前是setselected(nullptr), 现改为全部遍历
-        selected = nullptr;
-        plist.forEach([](Node<Point*>* p, int){
-            p->data->refreshStyle(0);
-        });
-    }
+	else {      // 之前是setselected(nullptr), 现改为全部遍历
+		selected = nullptr;
+		plist.forEach([](Node<Point*>* p, int) {
+			p->data->refreshStyle(0);
+		});
+	}
 }
 void Graph::mouseMoveEvent(QMouseEvent *e) {
 	//上一个clickpos由pressed或上一个move修改
@@ -227,9 +230,8 @@ void Graph::refreshLocation() {
 	for (int i = 0; i < plist.length; i++) {
 		Point* q = p->data;
 		p = p->next;
-        q->moveF((q->location - origin)*zoomTime);
+		q->moveF((q->location - origin)*zoomTime);
 	}
-//	update();
 }
 void Graph::moveView(QPoint from, QPoint to) {
 	// 原点变换(scene中的)
@@ -250,13 +252,12 @@ void Graph::zoom(int mode, QPoint anchor) {
 	for (int i = 0; i < plist.length; i++) {
 		Point* q = p->data;
 		p = p->next;
-        q->moveF((q->location - origin)*zoomTime);
+		q->moveF((q->location - origin)*zoomTime);
 		//提前算好新size
 		q->resize(newSize, newSize);
 		//缩放时圆角随之改变
 		q->refreshStyle();
 	}
-//	update();
 }
 void Graph::wheelEvent(QWheelEvent *e) {
 	//滚轮滚动，集体缩放
@@ -272,48 +273,57 @@ void Graph::backtoCenter() {
 
 void Graph::autoMove() {
 	Node<V*>* p = kg->v.head->next;
-    QPointF* totalf = new QPointF[kg->v.length];    // 默认全零
+	QPointF* totalf = new QPointF[kg->v.length];    // 默认全零
 
-    // 斥力 电磁模型 利用相互作用力的特点 简化为O(n^2/2)
-    while (p) {    //p是被作用节点
-        if(p->data->p->hidden){ p=p->next; continue;}           // 被隐藏的不算对他人的斥力
-        Node<V*>* q = p->next;
-        while (q) {
-            QPointF vec = p->data->p->location - q->data->p->location;
-            double dis = QPointF::dotProduct(vec, vec);
-            QPointF Force = G * (vec) / (qPow(dis, 1.5) + DD); //指向p
-            totalf[p->data->id] += Force;
-            totalf[q->data->id] -= Force;
-            q = q->next;
-        }
-        p = p->next;
-    }
+	// 斥力 电磁模型 利用相互作用力的特点 简化为O(n^2/2)
+	while (p) {    //p是被作用节点
+		if (p->data->p->hidden) {
+			p = p->next;    // 被隐藏的不算对他人的斥力
+			continue;
+		}
+		Node<V*>* q = p->next;
+		while (q) {
+			QPointF vec = p->data->p->location - q->data->p->location;
+			double dis = QPointF::dotProduct(vec, vec);
+			QPointF Force = G * (vec) / (qPow(dis, 1.5) + DD); //指向p
+			totalf[p->data->id] += Force;
+			totalf[q->data->id] -= Force;
+			q = q->next;
+		}
+		p = p->next;
+	}
 
-    // 和父节点的引力 弹簧模型
-    p = kg->v.head->next;
-    while (p) {
-        if(p->data->p->hidden){ p=p->next; continue;}           // 被隐藏的不算对他人的引力
-        E* e = p->data->e->tnext;
-        while (e) {
-            QPointF Force = (e->from->p->location - p->data->p->location) * K;   // 位移, 指向父节点
-            totalf[p->data->id] += Force;
-            totalf[e->from->id] -= Force;
-            e = e->tnext;
-        }
-        p = p->next;
-    }
+	// 和父节点的引力 弹簧模型
+	p = kg->v.head->next;
+	while (p) {
+		if (p->data->p->hidden) {
+			p = p->next;    // 被隐藏的不算对他人的引力
+			continue;
+		}
+		E* e = p->data->e->tnext;
+		while (e) {
+			QPointF Force = (e->from->p->location - p->data->p->location) * K;   // 位移, 指向父节点
+			totalf[p->data->id] += Force;
+			totalf[e->from->id] -= Force;
+			e = e->tnext;
+		}
+		p = p->next;
+	}
 
 	// 根据上一时刻计算 加速度 速度 位移
 	p = kg->v.head->next;
 	while (p) {
-        if(p->data->p->hidden){ p=p->next; continue;}           // 被隐藏的不算力
-        Point* P = p->data->p;
-        if(P!=selected && !P->pin){
-            QPointF v=P->speed;
-            QPointF acceleration = (totalf[p->data->id] - DAMPING * v) / MASS;  // 改变 加速度
-            P->speed += acceleration * DT;                                      // 改变 速度
-            P->moveOnScene(P->location + (P->speed + v) * DT/2);                // 改变 位移
-        }
+		if (p->data->p->hidden) {
+			p = p->next;    // 被隐藏的不算力
+			continue;
+		}
+		Point* P = p->data->p;
+		if (P != selected && !P->pin) {
+			QPointF v = P->speed;
+			QPointF acceleration = (totalf[p->data->id] - DAMPING * v) / MASS;  // 改变 加速度
+			P->speed += acceleration * DT;                                      // 改变 速度
+			P->moveOnScene(P->location + (P->speed + v) * DT / 2);              // 改变 位移
+		}
 		p = p->next;
 	}
 
@@ -321,25 +331,25 @@ void Graph::autoMove() {
 }
 
 void Graph::keyPressEvent(QKeyEvent* e) {
-    switch(e->key()){
-    case Qt::Key_Delete:
-        removeP(selected);
-        break;
-    default:
-        QWidget::keyPressEvent(e);
-        break;
-    }
+	switch (e->key()) {
+		case Qt::Key_Delete:
+			removeP(selected);
+			break;
+		default:
+			QWidget::keyPressEvent(e);
+			break;
+	}
 }
 
 void Graph::keyReleaseEvent(QKeyEvent* e) {
-    switch(e->key()){
-    default:
-        QWidget::keyReleaseEvent(e);
-        break;
-    }
+	switch (e->key()) {
+		default:
+			QWidget::keyReleaseEvent(e);
+			break;
+	}
 }
 
-void Graph::timerSwitch(bool on){
-    timer->stop();
-    if(on) timer->start(20);
+void Graph::timerSwitch(bool on) {
+	timer->stop();
+	if (on) timer->start(20);
 }
