@@ -123,8 +123,8 @@ class KG {
 		void removeE(int From, int To);
 
 		Task* addTask(string Text);
-		Task* getTask(long Id);		//按id找题
-		void removeTask(long Id);	//按id删题
+        Task* getTask(unsigned long Id);	//按id找题
+        void removeTask(unsigned long Id);  //按id删题
 
 		void saveTo(string path);
         void exportTo(string path);

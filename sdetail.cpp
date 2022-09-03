@@ -104,6 +104,7 @@ DoTask::DoTask(Point* p, Page *parent):
 		if (next->text() == "下一题") {
 			judge->clear();
 			ans->clear();
+            ans->setFocus();
 			pickTask();
 			showTask();
 			next->setText("确定");
@@ -114,8 +115,9 @@ DoTask::DoTask(Point* p, Page *parent):
 				// 判断是否正确
 				QString x(QString::fromStdString(currentTask->text));
 				int i = x.indexOf(DIVIDE);
-				char y = currentTask->text[i + DIVIDELENGTH];
-				if (ans->text()[0] == y || ans->text()[0] == (y + 32)) {
+                QString y = x.mid(i + DIVIDELENGTH);
+                QString answer = ans->text().remove(QRegExp("\\s")).toUpper();
+                if (answer == y || answer == y.toUpper()) {
 					judge->setText("回答正确");
 					updateWeight(1);
 				} else {
@@ -176,7 +178,6 @@ void DoTask::pickTask() {
 		srand(time(NULL));
 
 		// 不重复
-		qDebug() << maxnum << " " << m.taskNum << ' ' << m.doneNum;
 		Task* pic = maxs[rand() % maxnum];
 		while (pic == currentTask && maxnum > 1)
 			pic = maxs[rand() % maxnum];

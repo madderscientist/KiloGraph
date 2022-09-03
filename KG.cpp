@@ -169,7 +169,7 @@ Task* KG::addTask(string Text) {	// 位置对Task没有意义，所以头插
 	return task.insert(0, new Task(Text))->data;
 }
 
-Task* KG::getTask(long Id)	{		//按id找题
+Task* KG::getTask(unsigned long Id)	{		//按id找题
 	Node<Task*>* p = task.head->next;
 	for (int i = 0; i < task.length; i++) {
 		if (p->data->id == Id)
@@ -178,7 +178,7 @@ Task* KG::getTask(long Id)	{		//按id找题
 	}
 	return nullptr;
 }
-void KG::removeTask(long Id) {
+void KG::removeTask(unsigned long Id) {
 	Node<Task*>* p = task.head;
 	while (p->next && p->next->data->id != Id) p = p->next;
 	Node<Task*>* q = p->next;
