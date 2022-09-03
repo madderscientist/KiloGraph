@@ -2,9 +2,9 @@
 #define TASKCARD_H
 
 #include "card.h"
-#include "point.h"
+#include "KG.h"
 #include <QScrollArea>
-#define DIVIDE "&&&"
+
 
 class Page;
 class TaskCard : public Card {
@@ -15,12 +15,14 @@ public:
     QListWidget* Ts;
     void iniList();
     void clearList();
+    void keyPressEvent(QKeyEvent*);
 };
 
 class TaskInf : public QListWidgetItem {
 public:
     explicit TaskInf(Task*,TaskCard* parent, QListWidget* list);
     ~TaskInf();
+    void offself();
     Page* page;
     Task* t;
     QWidget* w;

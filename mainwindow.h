@@ -17,6 +17,7 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void closeEvent(QCloseEvent*);
 
     int tabIndex=-1;
     void refreshStatus(int);

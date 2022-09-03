@@ -19,6 +19,7 @@ SOURCES += \
     page.cpp \
     point.cpp \
     sdetail.cpp \
+    student.cpp \
     taskcard.cpp \
     tdetail.cpp
 
@@ -31,6 +32,7 @@ HEADERS += \
     page.h \
     point.h \
     sdetail.h \
+    student.h \
     taskcard.h \
     tdetail.h \
     tiplabel.h

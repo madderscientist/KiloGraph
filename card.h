@@ -36,6 +36,7 @@ public:
 };
 
 // 卡片容器 添加部件请往Layout中addWidget
+// 会自动析构
 class Card : public QWidget {
     Q_OBJECT
 public:
@@ -44,6 +45,8 @@ public:
     BottomResize* bottom;
     QVBoxLayout *Layout;
     void resizeEvent(QResizeEvent*);
+    static void niceButton(QPushButton*);
+    static void niceLineEdit(QLineEdit*);
 };
 
 class myLineEdit : public QLineEdit {

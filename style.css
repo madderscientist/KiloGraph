@@ -9,7 +9,7 @@ QTabWidget::pane {
 
 QTabBar::tab {
     height: 35px;
-    width: 160px;
+    width: 180px;
     background: white;
     border-right: 2px solid rgb(250,250,250);
     border-top: 2px solid rgb(250,250,250);
@@ -20,3 +20,45 @@ QTabBar::tab {
 QTabBar::tab:!selected {
     background: none;
 }
+
+/*1.滑动过的槽设计参数*/
+QSlider::sub-page:horizontal {
+     /*槽颜色*/
+    background:rgb(241,178,227);
+     /*外环区域倒圆角度*/
+    border-radius: 3px;
+     /*上遮住区域高度*/
+    margin-top:7px;
+     /*下遮住区域高度*/
+    margin-bottom:7px;
+}
+
+/*2.未滑动过的槽设计参数*/
+QSlider::add-page:horizontal {
+    background: rgb(105,105, 105);
+    border: 1px solid #777;
+    border-radius: 3px;
+    margin-top:7px;
+    margin-bottom:7px;
+}
+
+/*3.平时滑动的滑块设计参数*/
+QSlider::handle:horizontal {
+    background: rgb(255,154,202);
+    width:40px;
+    border: 1px solid rgb(255,154,202);
+    border-radius: 15px;
+    margin-top:2px;
+    margin-bottom:2px;
+}
+
+/*4.手动拉动时显示的滑块设计参数*/
+QSlider::handle:horizontal:hover {
+    background: rgb(226,117,131);
+    width: 40px;
+    border: 1px solid rgb(226,117,131);
+    border-radius: 15px;
+    margin-top:2px;
+    margin-bottom:2px;
+}
+

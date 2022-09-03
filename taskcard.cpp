@@ -1,18 +1,16 @@
 #include "taskcard.h"
 #include "page.h"
+#include <QFileDialog>
 
 TaskCard::TaskCard(Page *parent)
     : Card("题目列表", parent)
 {
     QPushButton* addT=new QPushButton(QIcon(":/img/add.png"),"添加题目", this);
-    addT->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                            "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(addT);
     QPushButton* importT=new QPushButton("导入题目", this);
-    importT->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                            "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(importT);
     QPushButton* exportT=new QPushButton("导出题目", this);
-    exportT->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                            "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(exportT);
 
     QHBoxLayout* tools = new QHBoxLayout;
     tools->addWidget(addT);
@@ -36,8 +34,21 @@ TaskCard::TaskCard(Page *parent)
         Ts->insertItem(0,new TaskInf(parent->graph->kg->addTask(""), this, Ts));
         emit parent->ContentChanged();
     });
-    connect(importT, &QPushButton::clicked, this, [=](){});
-    connect(exportT, &QPushButton::clicked, this, [=](){});
+    connect(importT, &QPushButton::clicked, this, [=](){
+        QString fileName = QFileDialog::getOpenFileName(this,QStringLiteral("导入题目"),"/",QStringLiteral("题目表格(*csv)"));
+        if(!fileName.isEmpty()) {
+            parent->graph->kg->taskread(parent->graph->kg, fileName.toStdString());
+            TipLabel::showTip("导入成功！", parent);
+            clearList();iniList();
+        }
+    });
+    connect(exportT, &QPushButton::clicked, this, [=](){
+        QString fileName = QFileDialog::getSaveFileName(this, "导出题目", "/Tasks.csv", QStringLiteral("题目表格(*.csv)"));
+        if (!fileName.isNull()) {
+            parent->graph->kg->taskwrite(parent->graph->kg, fileName.toStdString());
+            TipLabel::showTip("导出成功！", parent);
+        }
+    });
     connect(Ts,&QListWidget::itemDoubleClicked, this, [=](QListWidgetItem *item){
         TaskInf* Item = (TaskInf*)item;
         Item->ifFold(Item->taskText->isEnabled());
@@ -61,6 +72,13 @@ void TaskCard::clearList(){
     while(item){
         delete item;
         item = Ts->takeItem(0);
+    }
+}
+void TaskCard::keyPressEvent(QKeyEvent* e){
+    switch (e->key()) {
+        case Qt::Key_Delete:            // 快捷删除题目
+            auto l=Ts->selectedItems();
+            if(!l.empty()) ((TaskInf*)l[0])->offself(), TipLabel::showTip("题目已删除", parent(), 800);
     }
 }
 
@@ -94,12 +112,11 @@ TaskInf::TaskInf(Task* Task,TaskCard* parent, QListWidget* List):
     scrollArea->setWidget(scrollWidget);
 
     QPushButton* off=new QPushButton("删除",w);
-    off->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                       "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(off);
+    off->setMinimumWidth(100);
 
     QPushButton* addV=new QPushButton(QIcon(":/img/add.png"), "关联知识点", w);
-    addV->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                        "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(addV);
 
     // 布局
     layout1->addWidget(ans,1);
@@ -114,15 +131,10 @@ TaskInf::TaskInf(Task* Task,TaskCard* parent, QListWidget* List):
     ifFold(true);
     List->setItemWidget(this, w);
 
-    w->connect(off, &QPushButton::clicked, parent, [=](){
-        emit page->ContentChanged();
-        page->graph->kg->removeTask(Task->id);
-        List->removeItemWidget(this);
-        delete this;
-    });
+    w->connect(off, &QPushButton::clicked, parent, [=](){offself();});
     w->connect(taskText, &myPlainTextEdit::focusOut, parent, [=](){saveTask();});
     w->connect(ans, &myLineEdit::focusOut, parent, [=](){saveTask();});
-    w->connect(addV, &QPushButton::clicked, [=](){
+    w->connect(addV, &QPushButton::clicked, w, [=](){
         if(page->TbindingV != this) page->setTbindingV(this);
         else page->setTbindingV(nullptr);
     });
@@ -131,7 +143,12 @@ TaskInf::~TaskInf(){
     if(page->TbindingV==this) page->setTbindingV(nullptr);
     delete w;
 }
-
+void TaskInf::offself(){
+    emit page->ContentChanged();
+    page->graph->kg->removeTask(t->id);
+    listWidget()->removeItemWidget(this);
+    delete this;
+}
 void TaskInf::ifFold(bool b){
     taskText->setDisabled(b);
     ans->setDisabled(b);
@@ -144,29 +161,34 @@ void TaskInf::ifFold(bool b){
         if (w) w->setVisible(!b);
     }
     this->setSizeHint(QSize(listWidget()->width(),b ? 100:300));
-    if(b) clearVs();else iniVs();
+    if(b) clearVs(), page->setTbindingV(nullptr);
+    else iniVs();
 }
 
 void TaskInf::readTask(){
     QString x(QString::fromStdString(t->text));
     int i=x.indexOf(DIVIDE);
     taskText->setPlainText(x.left(i));
-    if(i>-1) ans->setText(x.mid(i+3));
+    if(i>-1) ans->setText(x.mid(i+DIVIDELENGTH));
 }
 void TaskInf::saveTask(){
-    t->text = (taskText->toPlainText() + DIVIDE + ans->text()).toStdString();
+    string newtask = (taskText->toPlainText() + DIVIDE + ans->text()).toStdString();
+    if(t->text!=newtask){
+        t->text = newtask;
+        emit page->ContentChanged();
+    }
 }
 void TaskInf::clearVs(){
     for (int i = 0; i < BindVs->count(); ++i) {
         QWidget* w = BindVs->itemAt(i)->widget();
-        if(w) delete w;
+        if (w) delete w;
     }
 }
 void TaskInf::iniVs(){
     Node<V*>* p = t->v.head->next;
     while(p){
         BindVs->addWidget(new BindV(p->data, this));
-        p=p->next;
+        p = p->next;
     }
 }
 void TaskInf::startBindV(){
@@ -177,7 +199,6 @@ void TaskInf::startBindV(){
 void TaskInf::stopBindV(){
     page->setCursor(Qt::CrossCursor);
 }
-
 
 
 BindV::BindV(V* V, TaskInf* parent):

@@ -3,6 +3,7 @@
 
 #include "graph.h"
 #include "taskcard.h"
+#include "student.h"
 
 class MainWindow;
 class TDetail;
@@ -11,11 +12,14 @@ class Page : public QWidget {
     Q_OBJECT
 public:
     bool teacher = true;            // 两种模式
+    Student* student = nullptr;     // 学生进度管理 为空代表没文件 new了但其dir空代表新建 否则为有文件
     void GraphMode(char mode);
-    explicit Page(QWidget* = nullptr, QString="");
+
+    explicit Page(MainWindow* = nullptr, QString="");
+    ~Page();
     Graph* graph = nullptr;
     bool physics = true;
-    QString dir;
+    QString dir;                    // 图文件地址
 
     void resizeEvent(QResizeEvent*);
     void keyPressEvent(QKeyEvent*);
@@ -36,6 +40,7 @@ public:
 
 signals:
     void ContentChanged();          // 有更改的时候加星号
+    void renameTab(QString);        // 改tab名
 
 private:
     MainWindow* mainwindow;

@@ -4,7 +4,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 	, ui(new Ui::MainWindow) {
@@ -12,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(QIcon(":/logo.ico"));
     setAcceptDrops(true);
     setCentralWidget(ui->tabWidget);
-    setStyleSheet("background:rgb(219,219,219);");
+    setStyleSheet("background:rgb(220,220,220);");
     menuBan();
 
     // 状态栏
@@ -32,14 +31,18 @@ MainWindow::MainWindow(QWidget *parent)
     DampingSlider->setMinimum(0);
     ui->statusbar->addWidget(DampingSlider);
 
+    QLabel* githubUrl = new QLabel("https://github.com/madderscientist/KiloGraph", this);
+    githubUrl->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    ui->statusbar->addPermanentWidget(githubUrl);
+
 
     // 关闭tab
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, [=](int i){
-        if(ui->tabWidget->tabText(i)[0]=='*'){
-            QMessageBox::StandardButton result=QMessageBox::question(this, "图谱尚未保存","是否仍然关闭？", QMessageBox::Yes|QMessageBox::No);
+        Page* page=(Page*)(ui->tabWidget->widget(i));
+        if(ui->tabWidget->tabText(i)[0] == '*'){
+            QMessageBox::StandardButton result=QMessageBox::question(this, page->teacher?"图谱尚未保存":"学习进度尚未保存","是否仍然关闭？", QMessageBox::Yes|QMessageBox::No);
             if(result==QMessageBox::No) return;
         }
-        Page* page=(Page*)(ui->tabWidget->widget(i));
         ui->tabWidget->removeTab(i);
         delete page;
     });
@@ -69,13 +72,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionsave->setShortcut(QKeySequence("Ctrl+S"));
     connect(ui->actionsave, &QAction::triggered, [ = ]() {
         Page* page = (Page*)(ui->tabWidget->currentWidget());
-        if(page->dir.isEmpty()){
-            saveAs();   // 另存为
+        // 两种模式保存的东西不一样
+        if(page->teacher){
+            if(page->dir.isEmpty()){
+                saveAs();   // 另存为
+            } else {
+                Page* page=(Page*)ui->tabWidget->currentWidget();
+                page->dir = page->dir;
+                page->graph->kg->saveTo(page->dir.toStdString());
+                saved();    // 星号取消
+            }
         } else {
-            Page* page=(Page*)ui->tabWidget->currentWidget();
-            page->dir = page->dir;
-            page->graph->kg->saveTo(page->dir.toStdString());
-            saved();    // 星号取消
+            if(!page->student) TipLabel::showTip("还未导入进度文件！", this);
+            else page->student->save(),saved();
         }
 	});
     // 另存为
@@ -84,16 +93,47 @@ MainWindow::MainWindow(QWidget *parent)
     // 导出
     ui->actionexport->setShortcut(QKeySequence("Ctrl+E"));
     connect(ui->actionexport, &QAction::triggered, this, [ = ]() {
-        QString fileName = QFileDialog::getSaveFileName(this, "导出图谱", "/", QStringLiteral("学生用图谱(*skg)"));
-        qDebug()<<fileName;
+        QString fileName = QFileDialog::getSaveFileName(this, "导出图谱", "/stuKG.skg", QStringLiteral("学生用图谱(*.skg)"));
         if (!fileName.isNull()) {
-            //fileName是文件名
-        } else {
-            //点的是取消
-        }
+            Page* page=(Page*)ui->tabWidget->currentWidget();
+            page->graph->kg->exportTo(fileName.toStdString());
+            TipLabel::showTip("导出成功", this);
+        } else TipLabel::showTip("导出取消", this);
 	});
+    // 导入(进度文件)
+    ui->actionimport->setShortcut(QKeySequence("Ctrl+I"));
+    connect(ui->actionimport, &QAction::triggered, this, [ = ]() {
+        Page* page=(Page*)ui->tabWidget->currentWidget();
+        bool ifcover = false;
+        // menuBan函数决定了只有teacher=false的界面可以使用此菜单
+        if(page->student) {
+            QMessageBox::StandardButton result=QMessageBox::question(this, "已导入进度","是否更换进度文件？", QMessageBox::Yes|QMessageBox::No);
+            if(result==QMessageBox::No) return;
+            else ifcover = true;
+        }
+        QString fileName = QFileDialog::getOpenFileName(this,QStringLiteral("选择进度文件"),"/",QStringLiteral("学习进度(*.learn)"));
+        if(!fileName.isEmpty()) {
+            if(ifcover) delete page->student;
+            page->student = new Student(page, fileName);
+        }
+    });
+    // 新建进度文件
+    ui->actionnewlearn->setShortcut(QKeySequence("Ctrl+L"));
+    connect(ui->actionnewlearn, &QAction::triggered, this, [ = ]() {
+        Page* page=(Page*)ui->tabWidget->currentWidget();
+        bool ifcover = false;
+        // menuBan函数决定了只有teacher=false的界面可以使用此菜单
+        if(page->student) {
+            QMessageBox::StandardButton result=QMessageBox::question(this, "已导入进度","是否更换进度文件？", QMessageBox::Yes|QMessageBox::No);
+            if(result==QMessageBox::No) return;
+            else ifcover = true;
+        }
+        if(ifcover) delete page->student;
+        page->student = new Student(page, "");
+    });
     // theworld！
     connect(Pause, &QPushButton::clicked, this, [=](){
+
         if(tabIndex>-1&&tabIndex<ui->tabWidget->count()){
             Page* page = (Page*)ui->tabWidget->currentWidget();
             page->physics=!page->physics;
@@ -114,14 +154,21 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {
     delete ui;
 }
+
+// teacher模式下保存图片文件 student模式下保存进度文件
 void MainWindow::saveAs(){
-    QString fileName = QFileDialog::getSaveFileName(this, "保存图谱", "/newKG.kg", QStringLiteral("图谱(*.kg)"));
-    if (!fileName.isNull()) {
-        Page* page=(Page*)ui->tabWidget->currentWidget();
-        page->dir = fileName;
-        page->graph->kg->saveTo(fileName.toStdString());
-        ui->tabWidget->setTabText(ui->tabWidget->currentIndex(), fileName.mid(fileName.lastIndexOf('/')+1));
-        saved();
+    Page* page=(Page*)ui->tabWidget->currentWidget();
+    if(page->teacher){
+        QString fileName = QFileDialog::getSaveFileName(this, "保存图谱", "/newKG.kg", QStringLiteral("图谱(*.kg)"));
+        if (!fileName.isNull()) {
+            page->dir = fileName;
+            page->graph->kg->saveTo(fileName.toStdString());
+            ui->tabWidget->setTabText(tabIndex,fileName.mid(fileName.lastIndexOf('/')+1));
+            saved();
+        }
+    } else {
+        if(!page->student) TipLabel::showTip("还未导入进度文件！", this);
+        else page->student->save(true);
     }
 }
 
@@ -129,15 +176,25 @@ void MainWindow::newPage(QString path){
     Page* p=new Page(this, path);
     QTimer::singleShot(0, this, [ = ]() {   // 必须延时 执行顺序: 执行完本函数，graph的延时0秒，本函数的延时0秒
         // 我猜计时器是和parent挂钩的 所以不延时的时候tabWidget先给我偷换parent，然后graph的timer就不能从本来的parent访问graph了
-        ui->tabWidget->addTab(p, path.isEmpty()?"*新建":path.mid(path.lastIndexOf('/')+1));
+        QString simpleName = "*新建";
+        if(!path.isEmpty()) {
+            int x = path.lastIndexOf('/');
+            int y = path.lastIndexOf('\\');
+            simpleName = path.mid((x>y?x:y)+1);
+        }
+        ui->tabWidget->addTab(p, simpleName);
         ui->tabWidget->setCurrentIndex(ui->tabWidget->count()-1);
         // 内容有更改则tab加*
-        connect(p, &Page::ContentChanged, ui->tabWidget, [=](){
+        connect(p, &Page::ContentChanged, this, [=](){
             int I=ui->tabWidget->indexOf((QWidget*)p);
             if(I>-1){
                 QString x=ui->tabWidget->tabText(I);
                 if(x[0]!='*') ui->tabWidget->setTabText(I, "*"+x);
             }
+        });
+        connect(p, &Page::renameTab, this, [=](QString name){
+            int I=ui->tabWidget->indexOf((QWidget*)p);
+            if(I>-1) ui->tabWidget->setTabText(I, name);
         });
     });
 }
@@ -151,14 +208,44 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *e){
     }
 }
 void MainWindow::dropEvent(QDropEvent* e){
-    newPage(e->mimeData()->urls()[0].toLocalFile());
+    QString path = e->mimeData()->urls()[0].toLocalFile();
+    if(path.right(3)=="arn"){
+        if(ui->tabWidget->count()){
+            Page* page=(Page*)ui->tabWidget->currentWidget();
+            if(!page->teacher){
+                if(page->student){
+                    QMessageBox::StandardButton result=QMessageBox::question(this, "已导入进度","是否更换进度文件？", QMessageBox::Yes|QMessageBox::No);
+                    if(result==QMessageBox::No) return;
+                    else delete page->student;
+                }
+                page->student = new Student(page, path);
+                e->accept();
+                return;
+            }
+        }
+        TipLabel::showTip("请先打开.skg文件！",this);
+    }
+    else newPage(path);
     e->accept();
 }
 void MainWindow::menuBan(){
+    // 不受限制的菜单: 新建 打开
+    // 通用菜单: 保存 另存为
     bool show = ui->tabWidget->count();
     ui->actionsave->setEnabled(show);
     ui->actionsaveas->setEnabled(show);
-    ui->actionexport->setEnabled(show);
+    if(show){
+        // teacher模式菜单: 导出
+        // student模式菜单: 导入 新建学习进度
+        show = ((Page*)ui->tabWidget->currentWidget())->teacher;
+        ui->actionimport->setEnabled(!show);
+        ui->actionnewlearn->setEnabled(!show);
+        ui->actionexport->setEnabled(show);
+    } else {
+        ui->actionimport->setEnabled(false);
+        ui->actionnewlearn->setEnabled(false);
+        ui->actionexport->setEnabled(false);
+    }
 }
 
 // 阻尼和暂停的初始化
@@ -186,4 +273,16 @@ float MainWindow::toDamp(int i){
 void MainWindow::saved(){
     QString x=ui->tabWidget->tabText(tabIndex);
     if(x[0]=='*') ui->tabWidget->setTabText(tabIndex, x.mid(1));
+}
+
+void MainWindow::closeEvent(QCloseEvent *e){
+    // 若有文件没保存则提示关闭
+    for(int i=0;i<ui->tabWidget->count();i++){
+        if(ui->tabWidget->tabText(i)[0] == '*')
+            if(QMessageBox::No == QMessageBox::question(this, "有文件尚未保存","是否仍然关闭？", QMessageBox::Yes|QMessageBox::No)){
+                e->ignore();
+                return;
+            }
+    }
+    e->accept();
 }

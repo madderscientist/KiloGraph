@@ -80,6 +80,9 @@
     <addaction name="actionsaveas"/>
     <addaction name="separator"/>
     <addaction name="actionexport"/>
+    <addaction name="separator"/>
+    <addaction name="actionimport"/>
+    <addaction name="actionnewlearn"/>
    </widget>
    <addaction name="menuopen"/>
   </widget>
@@ -107,6 +110,16 @@
   <action name="actionexport">
    <property name="text">
     <string>导出</string>
+   </property>
+  </action>
+  <action name="actionimport">
+   <property name="text">
+    <string>导入</string>
+   </property>
+  </action>
+  <action name="actionnewlearn">
+   <property name="text">
+    <string>新建学习进度</string>
    </property>
   </action>
  </widget>

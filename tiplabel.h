@@ -16,12 +16,13 @@ public:
         setText(str);
         QTimer::singleShot(time, this, &QWidget::close);
         setStyleSheet("color:white;border-radius:16px;background-color:rgba(30,30,30,0.7);padding:20px 35px;font-size:25px;");
-        setAttribute(Qt::WA_DeleteOnClose);                         //自动析构
-        setAlignment(Qt::AlignCenter);                              //文字居中
-        setWindowFlags(Qt::WindowStaysOnTopHint);                   //置顶
+        setAttribute(Qt::WA_DeleteOnClose);                         // 自动析构
+        setAlignment(Qt::AlignCenter);                              // 文字居中
+        setAttribute(Qt::WA_TransparentForMouseEvents, true);       // 鼠标穿透
+        setWindowFlags(Qt::WindowStaysOnTopHint);                   // 置顶
         setGeometry((parent->width() - sizeHint().width()) / 2,
                     (parent->height() - sizeHint().height()) / 2,
-                    sizeHint().width(), sizeHint().height());       //悬浮窗居中
+                    sizeHint().width(), sizeHint().height());       // 悬浮窗居中
         show();
     }
     static void showTip(QString str,QObject* parent,int time=2000,bool n=true){

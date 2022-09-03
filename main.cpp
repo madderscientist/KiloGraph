@@ -11,5 +11,6 @@ int main(int argc, char *argv[]) {
 		qss.close();
 	}
 	w.show();
+    if(argc > 1) w.newPage(argv[1]);
 	return a.exec();
 }

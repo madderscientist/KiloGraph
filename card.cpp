@@ -81,7 +81,14 @@ void Card::resizeEvent(QResizeEvent* e){
     top->resize(e->size().width(), 2*CardRadius);
     bottom->move(width()-bottom->width(),height()-bottom->height());
 }
-
+void Card::niceButton(QPushButton* btn){
+    btn->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
+                       "QPushButton:pressed{background:white;border-color:#90ee90;}");
+}
+void Card::niceLineEdit(QLineEdit* le){
+    le->setStyleSheet("QLineEdit{font-size:22px;padding:5px 10px;background:rgba(255,255,255,0.8);border-radius:15px;}"
+                      "QLineEdit:focus{background:white;border:2px solid #90ee90;}");
+}
 
 myPlainTextEdit::myPlainTextEdit(QWidget* parent):
     QPlainTextEdit(parent){
@@ -90,8 +97,7 @@ myPlainTextEdit::myPlainTextEdit(QWidget* parent):
 }
 myLineEdit::myLineEdit(QWidget* parent):
     QLineEdit(parent){
-    setStyleSheet("QLineEdit{font-size:22px;padding:5px 10px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                             "QLineEdit:focus{background:white;border:2px solid #90ee90;}");
+    Card::niceLineEdit(this);
 }
 void myLineEdit::focusOutEvent(QFocusEvent*){emit focusOut();}
 void myPlainTextEdit::focusOutEvent(QFocusEvent*){emit focusOut();}

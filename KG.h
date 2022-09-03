@@ -4,6 +4,8 @@
 #include <fstream>
 #include "linklist.h"
 #include <ctime>
+#define DIVIDE "&&&"
+#define DIVIDELENGTH 3
 using namespace std;
 
 class Point;
@@ -69,11 +71,14 @@ struct V {
 };
 
 struct Task {
-	long id;		// 用时间戳定义id, 独一无二
+    unsigned long id;		// 用时间戳定义id, 独一无二
 	string text;
 	linklist<V*> v;
 	Task(string Text) : text(Text) {
-		id = time(0);
+        static unsigned long lastID = 0;
+        id = time(0) - 1662119828;
+        if(lastID >= id) id = ++lastID;
+        else lastID = id;
 	}
 	~Task();
 	bool bindV(V*);
@@ -106,6 +111,7 @@ class KG {
 		// V的id指示的是其在链表的位置, 需要维护
 		V* addV(string Title = "", string Text = "");
 		V* getV(int index);			// 按id获取V
+		V* getV(string Title);		//按Title获取v
 		bool removeV(int index);	// 按id删V
 		bool removeV(V*);
 
@@ -121,8 +127,9 @@ class KG {
 		void removeTask(long Id);	//按id删题
 
 		void saveTo(string path);
-		static void writestring(string p, ofstream& ofs);
-		static string readstring(ifstream& ifs);
+        void exportTo(string path);
+		static void writestring(string p, ofstream& ofs, bool encryption = false);
+		static string readstring(ifstream& ifs, bool decrypt = false);
 
 		/**
 		 * @brief 把图谱存储到path
@@ -142,5 +149,9 @@ class KG {
 		 * @return 打开失败:0 编辑模式:1 学生读取模式:2
 		 */
 		static char KGread(KG* kg, string path);
+
+		// 针对题库的csv导入导出
+		static void taskwrite(KG *kg,string tarcsv);
+		static void taskread(KG* kg,string tarcsv);
 };
 #endif

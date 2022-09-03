@@ -1,4 +1,5 @@
 #include "KG.h"
+#include <sstream>
 #include <QMessageBox>
 
 E::~E()	{	// 维护十字链表
@@ -106,6 +107,11 @@ V* KG::getV(int index) {
 	if (p) return p->data;
 	return nullptr;
 }
+V* KG::getV(string Title) {
+	for (Node<V*>* p = v.head->next; p; p = p->next)
+		if (p->data->title == Title) return p->data;
+	return nullptr;
+}
 bool KG::removeV(int index) {
 	if (index < 0) index += v.length;
 	if (index >= v.length || index < 0) return false;
@@ -186,13 +192,19 @@ void KG::removeTask(long Id) {
 void KG::saveTo(string path) {
 	KGwrite(this, path);
 }
+void KG::exportTo(string path) {
+	KGwrite(this, path, 2);
+}
 
-void KG::writestring(string p, ofstream& ofs) {
+void KG::writestring(string p, ofstream& ofs, bool encryption) {
 	char* c;
 	int len = p.length() + 1;
 	c = new char[len];
-	for (int i = 0; i < (int)p.length(); i++)
+	for (int i = 0; i < (int)p.length(); i++) {
 		c[i] = p[i];
+		if (encryption)
+			c[i] += i;
+	}
 	c[len - 1] = 0;
 	ofs.write((char*)&len, sizeof(len));
 	ofs.write((const char*)c, len);
@@ -200,12 +212,16 @@ void KG::writestring(string p, ofstream& ofs) {
 }
 
 
-string KG::readstring(ifstream& ifs) {
+string KG::readstring(ifstream& ifs, bool decrypt) {
 	int len;
 	char* tar;
 	ifs.read((char*)&len, sizeof(int));
 	tar = new char[len];
 	ifs.read(tar, len);
+	if (decrypt) {
+		for (int i = 0; i < len - 1; i++)
+			tar[i] -= i;
+	}
 	string t = tar;
 	delete[]tar;
 	return t;
@@ -219,6 +235,7 @@ void KG::KGwrite(KG* kg, string txt, char mode) {
 	/*-----文件头-----*/
 	writestring("KiloGraph", ofs);
 	ofs.write(&mode, sizeof(char));
+	bool encryption = (mode == '2');	// 如果是2则加密
 
 	/*-----存节点-----*/
 	int counter = kg->v.length;
@@ -226,31 +243,31 @@ void KG::KGwrite(KG* kg, string txt, char mode) {
 
 	Node<V*>* p = kg->v.head->next;
 	for (; p; p = p->next) {
-		writestring(p->data->title, ofs);
-		writestring(p->data->text, ofs);
+		writestring(p->data->title, ofs, encryption);
+		writestring(p->data->text, ofs, encryption);
 	}
 
 	/*------存边------*/
 	string s = "a";
 	for (Node<V*>* p = kg->v.head->next; p; p = p->next) {
 		for (E* q = p->data->e->fnext; q; q = q->fnext) {
-			writestring(s, ofs);        // 标识后面的是边 因为没有统计边个数故用此法
+			writestring(s, ofs, encryption);        // 标识后面的是边 因为没有统计边个数故用此法
 			ofs.write((const char*)&q->from->id, sizeof(int));
 			ofs.write((char*)&q->to->id, sizeof(int));
-			writestring(q->text, ofs);
+			writestring(q->text, ofs, encryption);
 		}
 	}
-	writestring(string("Eend"), ofs);
+	writestring(string("Eend"), ofs, encryption);
 
 	/*------存题目------*/
 	counter = kg->task.length;
 	ofs.write((const char*)&counter, sizeof(int));
 	for (Node<Task*>* p = kg->task.head->next; p; p = p->next) {
-		counter = p->data->v.length;
-		writestring(p->data->text, ofs);
-		Node<V*>* q = p->data->v.head->next;
-		ofs.write((const char*)&counter, sizeof(int));
-		for (; q; q = q->next)
+		// ID 题目文本 关联知识点数量 关联知识点id们
+		ofs.write((const char*)&p->data->id, sizeof(p->data->id));
+		writestring(p->data->text, ofs, encryption);
+		ofs.write((const char*)&p->data->v.length, sizeof(int));
+		for (Node<V*>* q = p->data->v.head->next; q; q = q->next)
 			ofs.write((char*)&q->data->id, sizeof(int));
 	}
 	ofs.close();
@@ -271,40 +288,76 @@ char KG::KGread(KG* kg, string txt) {
 	// 文件模式
 	char mode;
 	ifs.read(&mode, sizeof(char));
+	bool decrypt = (mode == '2');	// 模式2则解密
 
 	string text;
 	int counter, i;
 	/*-------读点-------*/
 	ifs.read((char*)&counter, sizeof(int));
 	for (i = 0; i < counter; i++) {
-		title = readstring(ifs);
-		text = readstring(ifs);
+		title = readstring(ifs, decrypt);
+		text = readstring(ifs, decrypt);
 		kg->addV(title, text);      // 写入是从头开始 读取是尾插
 	}
 
 	/*-------读边-------*/
 	int from, to;
 	V* startV = kg->getV(0);
-	string sign = readstring(ifs);
+	string sign = readstring(ifs, decrypt);
 	while (sign != "Eend") {
 		ifs.read((char*)&from, sizeof(int));
 		ifs.read((char*)&to, sizeof(int));
 		if (startV->id != from) startV = kg->getV(from);
-		(startV->to(kg->getV(to)))->text = readstring(ifs);
-		sign = readstring(ifs);
+		(startV->to(kg->getV(to)))->text = readstring(ifs, decrypt);
+		sign = readstring(ifs, decrypt);
 	}
 
 	int counter1, n, vid;
+	long TID;
 	ifs.read((char*)&counter1, sizeof(int));
 	for (i = 0; i < counter1; i++) {   //题目数量的循环
-		text = readstring(ifs);
-		Task* t = kg->addTask(text);    //t是task链表指针；add之后指向下一个结点（add的结点）
+		ifs.read((char*)&TID, sizeof(long));
+		Task* t = kg->addTask(readstring(ifs, decrypt));
+		t->id = TID;
 		ifs.read((char*)&counter, sizeof(int));
-		for (n = 1; n <= counter; n++) {
+		for (n = 0; n < counter; n++) {
 			ifs.read((char*)&vid, sizeof(int));
 			t->bindV(kg->getV(vid));
 		}
 	}
 	ifs.close();
 	return mode;
+}
+
+void KG::taskwrite(KG *kg, string tarcsv) {
+	ofstream ou(tarcsv);
+	for (Node<Task*>*p = kg->task.head->next; p; p = p->next) {
+		int pos = p->data->text.find(DIVIDE);
+		ou << p->data->text.substr(0, pos) << ",";
+		ou << p->data->text.substr(pos + DIVIDELENGTH) << ",";
+		for (Node<V*>*q = p->data->v.head->next; q; q = q->next)
+			ou << q->data->title << ",";
+		ou << '\n';
+	}
+	ou.close();
+}
+
+
+void KG::taskread(KG* kg, string tarcsv) {
+	ifstream incsv(tarcsv);
+	string line;
+	while (getline(incsv, line)) {
+		istringstream sin(line);
+		string str2, str;
+		getline(sin, str, ',');
+		getline(sin, str2, ',');
+		str.append(DIVIDE);
+		str.append(str2);
+        Task* t = kg->addTask(str);
+        while (getline(sin, str, ',')) {
+            V* v = kg->getV(str);
+            if(v) t->bindV(v);
+        }
+	}
+	incsv.close();
 }

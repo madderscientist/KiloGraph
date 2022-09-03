@@ -4,7 +4,7 @@
 TDetail::TDetail(Point* p, Page *parent)
     : Card(QString::number(p->v->id)+"号节点详情", parent), P(p)
 {
-    connect(Card::top->off, &QPushButton::clicked, this, [=](){p->tdetail = nullptr;});
+    connect(Card::top->off, &QPushButton::clicked, this, [=](){p->detail = nullptr;});
 
     // 俩输入框
     title=new myLineEdit(this);
@@ -34,14 +34,12 @@ TDetail::TDetail(Point* p, Page *parent)
         P->pin = !P->pin;
     });
     QPushButton* remove=new QPushButton(QIcon(":/img/delete.png"),"自删除",this);
-    remove->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                          "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(remove);
     connect(remove, &QPushButton::clicked, parent ,[=](){
         parent->graph->removeP(P);
     });
     QPushButton* addV=new QPushButton(QIcon(":/img/add.png"),"添加分点",this);
-    addV->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                        "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(addV);
     connect(addV, &QPushButton::clicked, parent ,[=](){
         Point* newP = parent->graph->addPointAtScene(QPoint(P->location.x()+30, P->location.y()-31));
         P->v->to(newP->v);
@@ -49,8 +47,7 @@ TDetail::TDetail(Point* p, Page *parent)
         parent->graph->setSelected(P, newP);
     });
     QPushButton* addE=new QPushButton(QIcon(":/img/connect.png"),"添加边",this);
-    addE->setStyleSheet("QPushButton{border:2px solid red;height:35px;background:rgba(255,255,255,0.8);border-radius:15px;}"
-                        "QPushButton:pressed{background:white;border-color:#90ee90;}");
+    Card::niceButton(addE);
     connect(addE, &QPushButton::clicked, parent ,[=](){
         if(addE->text()=="添加边") parent->setTDetail(this);
         else parent->setTDetail(nullptr);
@@ -140,6 +137,7 @@ TEdgeInf::TEdgeInf(V* V, QListWidget *parent):
     QVBoxLayout* btns=new QVBoxLayout;
 
     QPushButton* del=new QPushButton("删",w);
+    del->setCursor(Qt::PointingHandCursor);
     del->setStyleSheet("background:red;");
     w->connect(del, &QPushButton::clicked, parent, [=](){
         delete ((TDetail*)parent->parent())->P->v->Eto(V);
@@ -147,12 +145,14 @@ TEdgeInf::TEdgeInf(V* V, QListWidget *parent):
         delete this;
     });
     cancel=new QPushButton("回",w);cancel->hide();
+    cancel->setCursor(Qt::PointingHandCursor);
     cancel->setStyleSheet("background:blue;");
     w->connect(cancel, &QPushButton::clicked, parent, [=](){
         fold();
         detail->setPlainText(QString::fromStdString(((TDetail*)parent->parent())->P->v->Eto(V)->text));
     });
     save=new QPushButton("存",w);save->hide();
+    save->setCursor(Qt::PointingHandCursor);
     save->setStyleSheet("background:green;");
     w->connect(save, &QPushButton::clicked, parent, [=](){
         fold();

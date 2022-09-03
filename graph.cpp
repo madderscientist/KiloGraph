@@ -25,26 +25,8 @@ Graph::Graph(Page *parent, QString path)
 	QTimer::singleShot(0, this, [ = ]() {
 		if (!path.isEmpty()) createByKG();
 		canvas = new QPixmap(size());
-		/*测试用创建节点↓*/
-		//        V*x = addPointAtScene(QPoint(400, 350))->v;
-		//        V*y = addPointAtScene(QPoint(500, 650))->v;
-		//        for (int i = 0; i < 4; i++)
-		//            x->to(addPointAtScene(QPoint(72 * i + 200, 72 * i + 300))->v);
-		//        for (int i = 0; i < 5; i++)
-		//            y->to(addPointAtScene(QPoint(70 * i + 200, 70 * i + 600))->v);
-		//        x->to(y);
-		//        x = addPointAtScene(QPoint(180, 800))->v;
-		//        y->to(x);
-		//        for (int i = 0; i < 5; i++)
-		//            x->to(addPointAtScene(QPoint(70 * i, 70 * i + 800))->v);
-		//        V*z = addPointAtScene(QPoint(500, 250))->v;
-		//        z->to(y);
-		//        setSelected(nullptr);
-		/*测试用创建节点↑*/
-
 		// 界面加载完运行. 运行顺序破大防...
 		// 先执行完构造函数, 然后resizeEvent, 然后延时0秒函数, 然后paintEvent, 然后resizeEvent, 然后paintEvent
-
 		// timer的start由mainwindow管控
 		QTimer::singleShot(10, this, &Graph::backtoCenter);
 	});
@@ -186,17 +168,21 @@ void Graph::setSelected(Point* main, Point* son) {
 void Graph::mousePressEvent(QMouseEvent *e) {
 	// 右击菜单
 	if (e->button() == Qt::RightButton) {
-		((Page*)parent())->setTDetail(nullptr);
-		((Page*)parent())->setTbindingV(nullptr);
-		QMenu* mouseRightMenu = new QMenu(this);
-		QAction* Add = mouseRightMenu->addAction("添加节点");
-		QAction* TaskList = mouseRightMenu->addAction("题目列表");
+        QMenu* mouseRightMenu = new QMenu(this);
+
+        if(((Page*)parent())->teacher){
+            ((Page*)parent())->setTDetail(nullptr);
+            ((Page*)parent())->setTbindingV(nullptr);
+            QAction* Add = mouseRightMenu->addAction("添加节点");
+            QAction* TaskList = mouseRightMenu->addAction("题目列表");
+            connect(TaskList, &QAction::triggered, (Page*)parent(), &Page::showTaskCard);
+            connect(Add, &QAction::triggered, this, [ = ]() {
+                addPointAtView(e->pos());
+            });
+        }
+
 		QAction* dataCenter = mouseRightMenu->addAction("转到数据中心");
 		QAction* Origin = mouseRightMenu->addAction("转到世界中心");
-		connect(TaskList, &QAction::triggered, (Page*)parent(), &Page::showTaskCard);
-		connect(Add, &QAction::triggered, this, [ = ]() {
-			addPointAtView(e->pos());
-		});
 		connect(dataCenter, &QAction::triggered, this, &Graph::backtoCenter);
 		connect(Origin, &QAction::triggered, this, [ = ]() {
 			origin = QPoint(0, 0);
@@ -333,7 +319,7 @@ void Graph::autoMove() {
 void Graph::keyPressEvent(QKeyEvent* e) {
 	switch (e->key()) {
 		case Qt::Key_Delete:
-			removeP(selected);
+            if(((Page*)parent())->teacher) removeP(selected);
 			break;
 		default:
 			QWidget::keyPressEvent(e);

@@ -9,6 +9,7 @@ to(位置)：返回节点指针
 
 insert(位置，值)：位置从零开始,不支持负数与超过
 (注：头插最快，尾插最慢，如需尾插请自己添加尾节点)
+setPush(值)：不重复尾插
 remove(位置)：位置从零开始，不支持超过,支持负数
 
 indexOf(值,从第几个开始找（默认从头）)：返回位置,没找到则返回-1
@@ -167,6 +168,24 @@ public:
 		return p->next;
 	}
 
+    /**
+    * @brief 集合插入 元素不重复
+    *
+    * @param value 掺入节点的data
+    *
+    * @return 插入的节点的指针 如果重复则返回空指针
+    */
+    Node<T>* setPush(T value = nullptr) {
+        Node<T>* p = head;
+        while(p->next){
+            if(p->next->data == value) return nullptr;
+            p=p->next;
+        }
+        p->next = new Node<T>(value, nullptr);
+        length++;
+        return p->next;
+    }
+
 	/**
 	* @brief 按index删除节点
 	*
@@ -262,9 +281,10 @@ public:
 	/**
 	* @brief 链表转数组
 	*
-	* @return 返回长度为length的数组指针
+    * @return 返回长度为length的数组指针 如果长度为0则返回空指针
 	*/
 	T* toArray() {
+        if(length == 0) return nullptr;
 		T* result = new T[length];
 		Node<T>* p = head->next;
 		for (int i = 0; i < length; i++) {
