@@ -41,7 +41,10 @@ TDetail::TDetail(Point* p, Page *parent)
     QPushButton* addV=new QPushButton(QIcon(":/img/add.png"),"添加分点",this);
     Card::niceButton(addV);
     connect(addV, &QPushButton::clicked, parent ,[=](){
-        Point* newP = parent->graph->addPointAtScene(QPoint(P->location.x()+30, P->location.y()-31));
+        static double a = -0.1;
+        a += 0.258;
+        if(a>6.28) a-= 6.28;
+        Point* newP = parent->graph->addPointAtScene(QPoint(P->location.x()+30*cos(a), P->location.y()+30*sin(a)));
         P->v->to(newP->v);
         Es->addItem(new TEdgeInf(newP->v ,Es));
         parent->graph->setSelected(P, newP);
