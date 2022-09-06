@@ -1,5 +1,5 @@
 <h1 align='center'> KiloGraph </h1>
-<img center='align' src='[https://github.com/madderscientist/KiloGraph/blob/main/READMEsources/icon.png](https://user-images.githubusercontent.com/51468627/188633244-c45dfc47-89cb-4fa3-916a-8c00e5571467.png)'/>
+<img center='align' src='https://github.com/madderscientist/KiloGraph/blob/main/READMEsources/icon.png](https://user-images.githubusercontent.com/51468627/188633244-c45dfc47-89cb-4fa3-916a-8c00e5571467.png)'/>
 
 【SEU C++大作业】以 知识点+题目 构成的可视化知识图谱 KnowledgeGraph <br>
 我们的目标是：<br>
