@@ -1,6 +1,7 @@
 <h1 align='center'> KiloGraph </h1>
-<img center='align' src='https://github.com/madderscientist/KiloGraph/blob/main/READMEsources/icon.png'/>
-【SEU C++大作业】以 知识点+题目 构成的可视化知识图谱 KnowledgeGraph
+<img center='align' src='[https://github.com/madderscientist/KiloGraph/blob/main/READMEsources/icon.png](https://user-images.githubusercontent.com/51468627/188633244-c45dfc47-89cb-4fa3-916a-8c00e5571467.png)'/>
+
+【SEU C++大作业】以 知识点+题目 构成的可视化知识图谱 KnowledgeGraph <br>
 我们的目标是：<br>
 老师使用它，可视化建立学科知识点网络和题库，导出文件给学生；学生做题并生成个性化知识掌握图谱。
 
