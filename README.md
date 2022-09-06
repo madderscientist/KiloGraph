@@ -1,7 +1,9 @@
-# KiloGraph
-【SEU C++大作业】以 知识点+题目 构成的可视化知识图谱 KnowledgeGraph<br>
+<h1 align='center'> KiloGraph </h1>
+<img center='align' src='https://github.com/madderscientist/KiloGraph/blob/main/READMEsources/icon.png'/>
+【SEU C++大作业】以 知识点+题目 构成的可视化知识图谱 KnowledgeGraph
 我们的目标是：<br>
 老师使用它，可视化建立学科知识点网络和题库，导出文件给学生；学生做题并生成个性化知识掌握图谱。
+
 
 # 下载
 [V 1.0](https://github.com/madderscientist/KiloGraph/releases/tag/v1.0)
